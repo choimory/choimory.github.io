@@ -3,6 +3,8 @@ permalink: /about/
 title: "About"
 ---
 
-Tempor velit sint sunt ipsum tempor enim ad qui ullamco. Est dolore anim ad velit duis dolore minim sunt aliquip amet commodo labore. Ut eu pariatur aute ea aute excepteur laborum. Esse ea esse excepteur minim mollit qui cillum excepteur ex dolore magna. Labore deserunt fugiat incididunt incididunt sint ea. Consequat dolore aute laboris quis proident quis non et est consectetur ex eiusmod sit culpa.
+> 오늘의 나는 어제의 나보다 발전했나요?
 
-Cupidatat ea do et in excepteur in. Ad nostrud ut est esse eu duis ea sunt eiusmod. Aliquip tempor veniam sint elit fugiat. Velit incididunt laboris amet incididunt labore dolore irure velit excepteur commodo deserunt laborum. Consectetur eu fugiat veniam veniam Lorem labore magna eiusmod. Ea occaecat reprehenderit pariatur consectetur minim labore ut aliquip.
+피곤하다고 일 끝나고 집 가서 피곤하다고 자버리면, 오늘의 나는 어제의 나와 별 반 차이가 없는 하루가 됩니다.
+
+아주 조금이라도 그리고 미약하더라도 소득이 있는 하루가 되기 위해, 그저 쳇바퀴 도는 하루가 아닌 조금이라도 발전한 오늘의 내가 되기 위해
