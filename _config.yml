@@ -57,9 +57,12 @@ plugins:
 
 author:
   name   : "choimory"
-  avatar : "/assets/images/profile/IMG_1997.JPG"
+  avatar : "/assets/images/profile/0B354A31-CE69-44EF-B2FD-3B469BC71C41_1_105_c.jpeg"
   bio    : "Back-end Engineer"
   links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: "mailto:choimory@naver.com"
     - label: "Website"
       icon: "fas fa-fw fa-link"
       url: "https://choimory.github.io"
