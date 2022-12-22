@@ -1,10 +1,9 @@
 ---
 title: "Post: Quote"
 categories:
-  - Blog
+  - minimal-mistakes
 tags:
-  - Post Formats
-  - quote
+  - minimal-mistakes
 ---
 
 > Only one thing is impossible for God: To find any sense in any copyright law on the planet.
