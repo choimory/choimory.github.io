@@ -395,7 +395,7 @@ public class repo {
 - 객체가 아닌 컬렉션은 두번에 나눠 처리를 하게 됩니다.
     1. 필드 및 1:1 객체는 select절에 `Projection.fields()`내에 바로 매핑처리를 해주고
     2. 1:N 컬렉션 객체는 select절에 `Projections.list()`로 분리하여 따로 받습니다
-       ![img.png](img.png)
+       ![img.png](/assets/images/Querydsl%20Projections/img.png)
     - 이때 바로 fetch 할시엔 `List<Tuple>`을 받게 되며 `Tuple` 내에는 1번과 2번 항목이 분리되어 들어있습니다
     - 하지만 바로 Tuple을 받는것 대신 Querydsl의 `.transform()`을 이용하여 result aggregration 처리하여 바로 매핑 해줄수 있습니다
     3. Querydsl의 `.transform()`을 이용하여 result aggregation을 진행해줍니다
