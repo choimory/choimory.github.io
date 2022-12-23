@@ -3,6 +3,7 @@ title: "JPA Cross Join 해결하기"
 date: 2022-07-22T00:00:00
 toc: true
 toc_sticky: true
+classes: wide
 categories:
     - JVM
 tags:
