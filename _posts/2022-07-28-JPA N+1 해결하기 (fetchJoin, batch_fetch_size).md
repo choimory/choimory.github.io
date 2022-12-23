@@ -3,7 +3,6 @@ title: "JPA N+1 해결하기 (fetchJoin, batch_fetch_size)"
 date: 2022-07-28T00:00:00
 toc: true
 toc_sticky: true
-classes: wide
 categories:
     - JVM
 tags:
