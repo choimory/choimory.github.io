@@ -6,6 +6,7 @@ toc_sticky: true
 categories:
     - JVM
 tags:
+    - Java
     - Spring
     - JPA
     - Querydsl
