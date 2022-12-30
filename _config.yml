@@ -19,12 +19,12 @@ description: >- # this means to ignore newlines until "baseurl:"
   choimory's blog
 #twitter_username: username
 github_username: choimory
-minimal_mistakes_skin: default
+minimal_mistakes_skin: dark
 search: true
 
 # Build settings
 markdown: kramdown
-#remote_theme: mmistakes/minimal-mistakes
+remote_theme: mmistakes/minimal-mistakes
 # Outputting
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show
@@ -33,7 +33,6 @@ timezone: # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 include:
   - _pages
-  - _sass
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
@@ -122,7 +121,3 @@ category_archive:
 tag_archive:
   type: liquid
   path: /tags/
-
-sass:
-  sass_dir: _sass
-  style: compressed
