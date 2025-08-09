@@ -8,15 +8,13 @@
 
 - `bundle exec jekyll serve` -> localhost:4000
 
-# 사용 테마 정보
-
-## 사용 테마
+# 사용 테마
 
 - minimal-mistakes-jekyll
 - https://mmistakes.github.io/minimal-mistakes/
 - https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide
 
-## 구조
+# 구조
 
 - https://mmistakes.github.io/minimal-mistakes/docs/structure/
 - _config.yml
@@ -45,3 +43,28 @@
     - _assets에는 _posts 작성에 첨부한 이미지들을, _posts와 같은 폴더명으로 1:1로 매칭하여 보관하고
     - _pages에는 404 페이지, 자기소개 페이지, 태그 목록 같은 별개의 글들을 작성하고
     - _data와 _config.yml로 사이트의 형태와 기능을 조절함
+
+# 글 작성하기
+
+- _posts에 `YYYY-MM-DD-TITLE.md`로 파일을 생성
+- 글 내용은 아래와 같이 작성
+    ```markdown
+        ---
+        title: "제목"
+        date: YYYY-MM-DDTHH:MM:SS
+        toc: true/false (목차 생성여부)
+        toc_sticky: true/false (목차 측면에 sticky 여부)
+        categories:
+            - 카테고리
+        tags:
+            - 태그1
+            - 태그2
+            - 태그3
+            ...
+        ---
+        
+        이하 본문을 마크다운으로 작성
+    ```
+- 주의사항으로는 _posts에 디렉토리를 활용할 수 없다. _posts 하위 마크다운만 인식함
+- 그래서 글에 첨부할 이미지 파일을 _posts에 디렉토리로 글과 함께 관리를 못하고 별도로 관리함
+- 이미지가 첨부되는 글이 어떤 것인지 쉽게 관리할 수 있도록, assets의 images에 이미지가 첨부된 글 제목과 동일하게 디렉토리를 생성하여 관리함
