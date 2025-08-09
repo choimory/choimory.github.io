@@ -3,7 +3,7 @@
 ---
 
 // 1. 테마의 기본 폰트 크기 변수를 재정의합니다.
-$root-font-size: 17px;
+$root-font-size: 15px;
 
 // 2. Minimal Mistakes 테마의 나머지 스타일 가져오기
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // 현재 적용된 테마 스킨
@@ -11,5 +11,5 @@ $root-font-size: 17px;
 
 // 3. html 태그의 폰트 크기를 재설정합니다. (강제성 제거)
 html {
-  font-size: 17px;
+  font-size: 15px;
 }
