@@ -1,0 +1,5 @@
+# Treat SCSS files as vendored code, ignoring them for language statistics
+*.scss linguist-vendored
+
+# Explicitly mark Gemfile as Ruby
+Gemfile linguist-language=Ruby
