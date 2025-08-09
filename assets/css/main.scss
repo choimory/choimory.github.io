@@ -3,7 +3,7 @@
 ---
 
 // 1. 테마의 기본 폰트 크기 변수를 재정의합니다.
-$root-font-size: 10px;
+$root-font-size: 17px;
 
 // 2. Minimal Mistakes 테마의 나머지 스타일 가져오기
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // 현재 적용된 테마 스킨
