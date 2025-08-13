@@ -11,6 +11,7 @@
 # 사용 테마
 
 - minimal-mistakes-jekyll
+- https://github.com/mmistakes/minimal-mistakes
 - https://mmistakes.github.io/minimal-mistakes/
 - https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide
 
