@@ -167,7 +167,7 @@ from diagrams.k8s.ecosystem import Helm
 
 ```
 
-### 🧱 On-Prem / 기타
+### On-Prem / 기타
 
 ```python
 from diagrams.onprem.database import PostgreSQL
@@ -200,13 +200,7 @@ with Diagram("Web Service", direction="LR"):
 
 ---
 
-## 6. 조건/루프도 표현 가능?
-
-diagrams는 논리구조를 그리기 위한 도구는 아니라서 **조건문, 루프 같은 알고리즘 흐름도**에는 안 맞아. 하지만 복잡한 병렬 처리 구조, 데이터 흐름은 충분히 표현 가능함.
-
----
-
-## 7. 커스텀 노드 (이미지로 직접 만들기)
+## 6. 커스텀 노드 (이미지로 직접 만들기)
 
 ```python
 from diagrams import Node
@@ -224,7 +218,7 @@ class CustomNode(Node):
 
 ---
 
-## 8. 유용한 아이콘 종류 빠른 참조
+## 7. 유용한 아이콘 종류 빠른 참조
 
 - `diagrams.aws.compute.EC2`, `Lambda`, `AutoScaling`
 - `diagrams.aws.network.ELB`, `Route53`, `VPC`, `CloudFront`
