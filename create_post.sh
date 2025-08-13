@@ -12,7 +12,7 @@ fi
 # 2. 변수 설정
 POST_TITLE="$1"
 # 파일 이름에 사용될 제목 (소문자 변환, 공백을 하이픈으로 변경)
-FILENAME_TITLE=$(echo "$POST_TITLE" | tr '[:upper:]' '[:lower:]' | sed -e 's/ /-/g' -e 's/[^a-z0-9-]//g')
+FILENAME_TITLE=$(echo "$POST_TITLE" | tr '[:upper:]' '[:lower:]' | perl -pe 's/^\s+|\s+$//g; s/\s+/-/g; s/[^a-z0-9-가-힣]//g; s/-$//;')
 CURRENT_DATE=$(date +%Y-%m-%d)
 FULL_DATETIME=$(date +%Y-%m-%dT00:00:00)
 FILE_PATH="_posts/${CURRENT_DATE}-${FILENAME_TITLE}.md"
