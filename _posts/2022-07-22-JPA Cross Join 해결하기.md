@@ -4,14 +4,11 @@ date: 2022-07-22T00:00:00
 toc: true
 toc_sticky: true
 categories:
-    - JVM
+    - Back-end
 tags:
-    - Java
-    - Spring
+    - JVM
     - JPA
-    - Querydsl
     - Query tuning
-    - Cross join
 ---
 
 # 들어가며
