@@ -4,11 +4,9 @@ date: 2022-07-28T00:00:00
 toc: true
 toc_sticky: true
 categories: 
-    - JVM
+    - Back-end
 tags:
-    - Java
-    - Spring
-    - JPA
+    - JVM
     - Querydsl
 ---
 
