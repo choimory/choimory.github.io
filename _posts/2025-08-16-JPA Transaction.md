@@ -4,9 +4,10 @@ date: 2025-08-16T00:00:00
 toc: true
 toc_sticky: true
 categories:
-    - 
+    - Back-end
 tags:
-    - 
+    - JVM
+    - JPA
 ---
 
 # JPA Transaction
