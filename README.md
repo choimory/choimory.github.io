@@ -1,6 +1,6 @@
 # install
 
-- `brew install ruby` -> 이후 ./zshrc에 PATH 등록 필요
+- `brew install ruby` -> 이후 ~/.zshrc에 PATH 등록 필요
 - `gem install bundler`
 - `bundle install`
 
