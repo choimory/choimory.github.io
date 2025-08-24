@@ -9,3 +9,8 @@ $doc-font-size: 17;
 // 2. Minimal Mistakes 테마의 나머지 스타일 가져오기
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // 현재 적용된 테마 스킨
 @import "minimal-mistakes"; // 테마의 핵심 스타일
+
+/* h2 밑줄 제거 */
+h2 {
+  border-bottom: none !important;
+}
