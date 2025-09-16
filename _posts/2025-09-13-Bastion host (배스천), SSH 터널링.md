@@ -1,5 +1,5 @@
 ---
-title: "Bastion host (배스천), SSH 터널링"
+title: "Bastion(배스천)과 SSH Tunneling(터널링)"
 date: 2025-09-13T00:00:00
 toc: true
 toc_sticky: true
