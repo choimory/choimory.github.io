@@ -35,7 +35,7 @@ function getRolePermissions(role: UserRole): string[] {
 }
 
 // 사용 예시
-const role: UserRole = UserRole.Admin; 
+const role: UserRole = UserRole.Admin;
 console.log(getRolePermissions(role)); // ['read', 'write', 'delete']
 
 ```
