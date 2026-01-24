@@ -74,3 +74,39 @@
 
 - 반복되는 글 작성 전 루틴을 간단히 하기 위해 쉘스크립트를 작성함
 - `./post.sh "글 제목"` 입력시 현재 날짜와 입력한 제목을 이용해 공용작업을 처리해줌
+
+# 상단 메뉴 추가하기
+
+- 상단 네비게이션 메뉴는 `_data/navigation.yml` 파일에서 관리함
+- 현재 구성: Posts, Categories, Tags, About
+
+## 메뉴 추가 방법
+
+1. `_data/navigation.yml`에 새 항목 추가:
+    ```yaml
+    main:
+      - title: "Posts"
+        url: /posts/
+      - title: "Categories"
+        url: /categories/
+      - title: "Tags"
+        url: /tags/
+      - title: "About"
+        url: /about/
+      - title: "Portfolio"      # 새 메뉴 예시
+        url: /portfolio/
+    ```
+
+2. `_pages/` 폴더에 해당 페이지 파일 생성 (예: `portfolio.md`):
+    ```markdown
+    ---
+    title: "Portfolio"
+    permalink: /portfolio/
+    layout: single
+    author_profile: true
+    ---
+
+    페이지 내용 작성...
+    ```
+
+- 메뉴 순서는 navigation.yml에 작성된 순서대로 표시됨

@@ -1,6 +1,8 @@
 main:
-  - title: "Posts"
-    url: /posts/
+  - title: "Experiences"
+    url: /experiences/
+  - title: "Knowledge"
+    url: /knowledge/
   - title: "Categories"
     url: /categories/
   - title: "Tags"
