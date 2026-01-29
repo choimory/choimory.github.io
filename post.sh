@@ -31,10 +31,11 @@ case "$MENU_TYPE" in
 esac
 
 # 3. 변수 설정
-FILENAME_TITLE=$POST_TITLE
+# 슬래시(/)를 대시(-)나 언더바(_)로 치환하여 파일명 오류 방지
+SAFE_TITLE=$(echo "$POST_TITLE" | sed 's/\//-/g')
 CURRENT_DATE=$(date +%Y-%m-%d)
 FULL_DATETIME=$(date +%Y-%m-%dT00:00:00)
-FILE_PATH="${FOLDER}/${CURRENT_DATE}-${FILENAME_TITLE}.md"
+FILE_PATH="${FOLDER}/${CURRENT_DATE}-${SAFE_TITLE}.md"
 
 # 4. Front Matter 내용 정의
 FILE_CONTENT=$(cat <<EOF
