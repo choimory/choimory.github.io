@@ -8,6 +8,11 @@
 
 - `bundle exec jekyll serve` -> localhost:4000
 
+# 배포
+
+- `master` 브랜치에 push 시 `.github/workflows/jekyll.yml` 워크플로우가 자동으로 GitHub Pages에 배포
+- 최초 설정 시 GitHub 저장소 Settings > Pages > Source를 **GitHub Actions**으로 변경 필요
+
 # 사용 테마
 
 - minimal-mistakes-jekyll
