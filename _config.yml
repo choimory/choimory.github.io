@@ -55,6 +55,15 @@ plugins:
   - jemoji
   - jekyll-include-cache
 
+# Collections
+collections:
+  experiences:
+    output: true
+    permalink: /experiences/:title/
+  knowledge:
+    output: true
+    permalink: /knowledge/:title/
+
 author:
   name   : "choimory"
   avatar : "/assets/images/profile/0B354A31-CE69-44EF-B2FD-3B469BC71C41_1_105_c.jpeg 21-24-21-387.jpeg"
@@ -96,10 +105,21 @@ footer:
     #  url: "https://instagram.com/"
 
 defaults:
-  # _posts
+  # _experiences
   - scope:
       path: ""
-      type: posts
+      type: experiences
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: true
+      share: true
+      related: true
+  # _knowledge
+  - scope:
+      path: ""
+      type: knowledge
     values:
       layout: single
       author_profile: true

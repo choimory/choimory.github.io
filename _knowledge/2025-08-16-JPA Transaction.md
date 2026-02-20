@@ -122,9 +122,11 @@ try {
 
 ### 4. 요약
 
+```markdown
 | 구분 | 설명 |
 | --- | --- |
 | 방식 | AOP 기반 트랜잭션 처리 |
 | 구현 | 프록시 객체 생성 (JDK or CGLIB) |
 | 내부 처리 | `TransactionInterceptor`가 트랜잭션 시작/커밋/롤백 제어 |
 | 핵심 인터페이스 | `PlatformTransactionManager`, `TransactionDefinition`, `TransactionStatus` |
+```
