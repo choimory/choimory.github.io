@@ -13,7 +13,7 @@ tags:
 # NoSQL의 CAP 정리(CAP Theorem)
 
 - *CAP 정리(CAP Theorem)*는 분산 시스템에서 **Consistency(일관성)**, **Availability(가용성)**, **Partition Tolerance(네트워크 분할 내성)**라는 세 가지 속성 간의 상호 관계를 설명하는 이론이다.
-- 2000년 컴퓨터 과학자 **Eric Brewer**가 제안했으며, 분산 데이터베이스 설계에서 중요한 원칙으로 여겨진다.
+- 2000년 컴퓨터 과학자 **Eric Brewer**가 제안했으며, 분산 데이터베이스 설계에서 중요한 원칙으로 여겨진다
 
 ---
 
