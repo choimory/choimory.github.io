@@ -1,19 +1,13 @@
+# frozen_string_literal: true
+
 source "https://rubygems.org"
 
-gem "jekyll", "~> 3.10"
-gem "minimal-mistakes-jekyll"
-gem "kramdown-parser-gfm"
+gem "jekyll-theme-chirpy", "~> 7.6"
+gem "html-proofer", "~> 5.0", group: :test
 
-gem "tzinfo-data"
-gem "wdm", "~> 0.1.0" if Gem.win_platform?
-
-# If you have any plugins, put them here!
-group :jekyll_plugins do
-  gem "jekyll-paginate"
-  gem "jekyll-sitemap"
-  gem "jekyll-gist"
-  gem "jekyll-feed"
-  gem "jemoji"
-  gem "jekyll-include-cache"
-  gem "jekyll-algolia"
+platforms :windows, :jruby do
+  gem "tzinfo", ">= 1", "< 3"
+  gem "tzinfo-data"
 end
+
+gem "wdm", "~> 0.2.0", platforms: [:windows]
