@@ -18,10 +18,11 @@
 - Ruby 3.3
 - Jekyll 4.4.1
 - [Chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) 7.6.0
+- Docker
 - GitHub Pages
 - GitHub Actions
 
-Chirpy 7.6.0의 Ruby 요구사항은 `~> 3.1`이므로 Ruby 3.1 이상 4.0 미만이 필요합니다. 이 프로젝트의 로컬 및 CI 기준 버전은 Ruby 3.3입니다.
+Chirpy 7.6.0의 Ruby 요구사항은 `~> 3.1`입니다. 프로젝트는 Ruby 3.3 Docker 이미지로 실행하므로 호스트에 Ruby와 Bundler를 설치할 필요가 없습니다.
 
 ## 콘텐츠 아키텍처
 
@@ -75,6 +76,7 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 ```text
 .
 ├── .github/workflows/jekyll.yml   # GitHub Pages 빌드 및 배포
+├── .dockerignore                  # Docker build context 제외 목록
 ├── _config.yml                    # 사이트, 컬렉션, URL과 Chirpy 설정
 ├── _data/
 │   ├── contact.yml                # 사이드바 연락처 링크
@@ -87,9 +89,11 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 │   └── knowledge/                 # 개념과 기술 지식
 ├── _tabs/                         # 사이드바 탭 페이지와 표시 순서
 ├── assets/images/                 # 프로필 및 글 첨부 이미지
+├── Dockerfile                     # Ruby 3.3 기반 로컬 실행 이미지
 ├── Gemfile                        # Ruby gem 의존성
 ├── Gemfile.lock                   # 해석된 의존성 버전
 ├── index.html                     # Chirpy 홈 레이아웃 진입점
+├── local.sh                       # Docker 실행, 검증 및 정리 스크립트
 └── post.sh                        # 새 글 생성 스크립트
 ```
 
@@ -139,56 +143,43 @@ tags:
 
 ## 로컬 실행
 
-### Docker 사용
-
-호스트 Ruby 버전과 분리하기 위해 Ruby 3.3 Docker 환경 사용을 권장합니다.
-
-최초 한 번 gem 캐시용 volume을 생성합니다.
+Docker daemon이 실행 중인 상태에서 다음 명령을 사용합니다. 이미지 빌드, port 연결과 소스 volume 설정은 `local.sh`가 처리합니다.
 
 ```bash
-docker volume create choimory-bundle
+./local.sh serve
 ```
 
-의존성을 설치하고 로컬 서버를 실행합니다.
+실행 후 `http://localhost:4000`에서 확인합니다. 다른 포트를 사용하려면 `PORT` 환경 변수를 지정합니다.
 
 ```bash
-docker run --rm -it \
-  -p 4000:4000 \
-  -v "$PWD:/site" \
-  -v choimory-bundle:/usr/local/bundle \
-  -w /site \
-  ruby:3.3 \
-  bash -lc "bundle install && bundle exec jekyll serve --host 0.0.0.0 --port 4000"
+PORT=4001 ./local.sh serve
 ```
 
-실행 후 `http://localhost:4000`에서 확인합니다.
-
-### 로컬 Ruby 사용
-
-Ruby 3.1 이상 4.0 미만 환경에서는 다음 명령을 사용할 수 있습니다.
-
-```bash
-bundle install
-bundle exec jekyll serve
-```
+서버를 종료하면 `--rm`으로 실행된 컨테이너가 자동 삭제됩니다. gem 의존성은 이미지에 포함되며 별도 named volume은 만들지 않습니다.
 
 ## 빌드와 검증
 
 production 사이트를 생성합니다.
 
 ```bash
-JEKYLL_ENV=production bundle exec jekyll build --destination _site
+./local.sh build
 ```
 
 생성된 HTML의 이미지, 내부 링크와 스크립트를 검증합니다.
 
 ```bash
-bundle exec htmlproofer _site \
-  --disable-external \
-  --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+./local.sh test
 ```
 
-Docker를 사용할 때는 로컬 실행과 동일한 volume 및 작업 디렉터리 옵션 뒤에서 위 명령을 실행합니다.
+`test`는 production 빌드를 먼저 실행한 후 `html-proofer`를 수행합니다.
+
+로컬 이미지와 Jekyll 생성물을 정리합니다.
+
+```bash
+./local.sh clean
+```
+
+`clean`은 `choimory-blog:local` 이미지와 `_site`, `.jekyll-cache`, `.sass-cache`만 삭제합니다. 다른 프로젝트에서 사용하는 Docker build cache는 건드리지 않습니다.
 
 ## 배포
 
