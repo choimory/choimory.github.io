@@ -3,8 +3,8 @@ theme: jekyll-theme-chirpy
 lang: ko-KR
 timezone: Asia/Seoul
 
-title: choimory.devlog
-tagline: Back-end Engineer's dev log
+title: choimory
+tagline: Back-end, Dev-ops Engineer
 description: >-
   choimory's dev-log
 url: "https://choimory.github.io"
@@ -52,7 +52,7 @@ pageviews:
 
 theme_mode: dark
 cdn:
-avatar: "/assets/images/profile/0B354A31-CE69-44EF-B2FD-3B469BC71C41_1_105_c.jpeg 21-24-21-387.jpeg"
+avatar: "/assets/images/profile/4ECBB2E6-D78C-48B4-BCB7-E807EA548927_1_105_c.jpeg 21-24-21-394.jpeg"
 social_preview_image:
 toc: true
 
