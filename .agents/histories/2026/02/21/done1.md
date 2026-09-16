@@ -25,9 +25,9 @@ github-pages 232 | Error: The minimal-mistakes-jekyll theme could not be found.
 ### 2차: _config_dev.yml로 로컬/배포 환경 분리 시도
 - `_config_dev.yml` 생성해서 로컬에서는 `theme`, 배포에서는 `remote_theme` 사용하도록 분리
 - 결과: `jekyll-remote-theme` 플러그인이 config와 무관하게 항상 실행됨
-  - `github-pages` 젬이 `:jekyll_plugins` Bundler 그룹에 있어서 `jekyll-remote-theme`을 자동 로드
-  - `remote_theme: ""` → Ruby에서 `""[1..-1]` = nil → `match` 오류
-  - `remote_theme: null` → Jekyll config 머지 시 null이 기존 값을 오버라이드하지 않음
+    - `github-pages` 젬이 `:jekyll_plugins` Bundler 그룹에 있어서 `jekyll-remote-theme`을 자동 로드
+    - `remote_theme: ""` → Ruby에서 `""[1..-1]` = nil → `match` 오류
+    - `remote_theme: null` → Jekyll config 머지 시 null이 기존 값을 오버라이드하지 않음
 
 ## 최종 해결책: 커스텀 GitHub Actions 워크플로우
 
