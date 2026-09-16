@@ -19,10 +19,10 @@ POST_TITLE="$2"
 
 case "$MENU_TYPE" in
   e|E)
-    FOLDER="_experiences"
+    FOLDER="_posts/experiences"
     ;;
   k|K)
-    FOLDER="_knowledge"
+    FOLDER="_posts/knowledge"
     ;;
   *)
     echo "오류: 올바른 메뉴 타입을 입력해주세요. (e: experiences, k: knowledge)"
@@ -43,11 +43,8 @@ FILE_CONTENT=$(cat <<EOF
 title: "${POST_TITLE}"
 date: ${FULL_DATETIME}
 toc: true
-toc_sticky: true
-categories:
-    -
-tags:
-    -
+categories: []
+tags: []
 ---
 
 (본문)

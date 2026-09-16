@@ -1,143 +1,175 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+# Site configuration
+theme: jekyll-theme-chirpy
+lang: ko-KR
+timezone: Asia/Seoul
 
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
-title: choimory.devlog
-email: choimory@naver.com
-description: >- # this means to ignore newlines until "baseurl:"
+title: choimory
+tagline: Back-end, Dev-ops Engineer
+description: >-
   choimory's dev-log
-#twitter_username: username
-github_username: choimory
-minimal_mistakes_skin: "dark" # "default", "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
-search: true
+url: "https://choimory.github.io"
+baseurl: ""
 
-# Build settings
-markdown: kramdown
-theme: minimal-mistakes-jekyll
-# Outputting
-permalink: /:categories/:title/
-paginate: 5 # amount of posts to show
-paginate_path: /page:num/
-timezone: # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+github:
+  username: choimory
 
-include:
-  - _pages
+twitter:
+  username:
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+social:
+  name: choimory
+  email: choimory@naver.com
+  links:
+    - https://github.com/choimory
+    - https://choimory.github.io
 
-# Plugins (previously gems:)
-plugins:
-  - jekyll-paginate
-  - jekyll-sitemap
-  - jekyll-gist
-  - jekyll-feed
-  - jemoji
-  - jekyll-include-cache
+webmaster_verifications:
+  google:
+  bing:
+  alexa:
+  yandex:
+  baidu:
+  facebook:
 
-# Collections
+analytics:
+  google:
+    id:
+  goatcounter:
+    id:
+  umami:
+    id:
+    domain:
+  matomo:
+    id:
+    domain:
+  cloudflare:
+    id:
+  fathom:
+    id:
+
+pageviews:
+  provider:
+
+theme_mode: dark
+cdn:
+avatar: "/assets/images/profile/4ECBB2E6-D78C-48B4-BCB7-E807EA548927_1_105_c.jpeg 21-24-21-394.jpeg"
+social_preview_image:
+toc: true
+
+actions:
+  edit_post:
+    enabled: false
+    url: ""
+    static_url: false
+
+comments:
+  provider:
+  disqus:
+    shortname:
+  utterances:
+    repo:
+    issue_term:
+  giscus:
+    repo:
+    repo_id:
+    category:
+    category_id:
+    mapping:
+    strict:
+    input_position:
+    lang:
+    reactions_enabled:
+
+assets:
+  self_host:
+    enabled:
+    env:
+
+pwa:
+  enabled: true
+  cache:
+    enabled: true
+    deny_paths:
+
+paginate: 10
+
+kramdown:
+  footnote_backlink: "&#8617;&#xfe0e;"
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: highlight
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+      start_line: 1
+
 collections:
-  experiences:
+  tabs:
     output: true
-    permalink: /experiences/:title/
-  knowledge:
-    output: true
-    permalink: /knowledge/:title/
-
-author:
-  name   : "choimory"
-  avatar : "/assets/images/profile/0B354A31-CE69-44EF-B2FD-3B469BC71C41_1_105_c.jpeg 21-24-21-387.jpeg"
-  bio    : "Back-end Engineer"
-  location: "Seoul, Korea"
-  links:
-    - label: "Email"
-      icon: "fas fa-fw fa-envelope-square"
-      url: "mailto:choimory@naver.com"
-    - label: "GitHub"
-      icon: "fab fa-fw fa-github"
-      url: "https://github.com/choimory"
-    - label: "Blog"
-      icon: "fas fa-fw fa-link"
-      url: "https://choimory.github.io"
-    #- label: "Twitter"
-    #  icon: "fab fa-fw fa-twitter-square"
-    #  url: "https://twitter.com/"
-    #- label: "Instagram"
-    #  icon: "fab fa-fw fa-instagram"
-    #  url: "https://instagram.com/"
-
-footer:
-  links:
-    - label: "Email"
-      icon: "fas fa-fw fa-envelope-square"
-      url: "mailto:choimory@naver.com"
-    - label: "GitHub"
-      icon: "fab fa-fw fa-github"
-      url: "https://github.com/choimory"
-    - label: "Blog"
-      icon: "fas fa-fw fa-link"
-      url: "https://choimory.github.io"
-    #- label: "Twitter"
-    #  icon: "fab fa-fw fa-twitter-square"
-    #  url: "https://twitter.com/"
-    #- label: "Instagram"
-    #  icon: "fab fa-fw fa-instagram"
-    #  url: "https://instagram.com/"
+    sort_by: order
 
 defaults:
-  # _experiences
   - scope:
       path: ""
-      type: experiences
+      type: posts
     values:
-      layout: single
-      author_profile: true
-      read_time: true
+      layout: post
       comments: true
-      share: true
-      related: true
-  # _knowledge
+      toc: true
+      permalink: /posts/:title/
+  - scope:
+      path: "_posts/experiences"
+      type: posts
+    values:
+      section: experience
+      permalink: /experiences/:title/
+  - scope:
+      path: "_posts/knowledge"
+      type: posts
+    values:
+      section: knowledge
+      permalink: /knowledge/:title/
+  - scope:
+      path: _drafts
+    values:
+      comments: false
   - scope:
       path: ""
-      type: knowledge
+      type: tabs
     values:
-      layout: single
-      author_profile: true
-      read_time: true
-      comments: true
-      share: true
-      related: true
-  # _pages
-  - scope:
-      path: "_pages"
-      type: pages
-    values:
-      layout: single
-      author_profile: true
+      layout: page
+      permalink: /:title/
 
-category_archive:
-  type: liquid
-  path: /categories/
-tag_archive:
-  type: liquid
-  path: /tags/
+sass:
+  style: compressed
+
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  profile: false
+  blanklines: false
+  ignore:
+    envs: [development]
+
+exclude:
+  - "*.gem"
+  - "*.gemspec"
+  - docs
+  - tools
+  - README.md
+  - README2.md
+  - LICENSE
+  - purgecss.js
+  - "*.config.js"
+  - "package*.json"
+
+jekyll-archives:
+  enabled: [categories, tags]
+  layouts:
+    category: category
+    tag: tag
+  permalinks:
+    tag: /tags/:name/
+    category: /categories/:name/
