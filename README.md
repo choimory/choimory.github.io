@@ -9,6 +9,7 @@
 - [메뉴와 화면 구성](#메뉴와-화면-구성)
 - [프로젝트 구조](#프로젝트-구조)
 - [글 작성](#글-작성)
+  - [Mermaid 다이어그램](#mermaid-다이어그램)
 - [로컬 실행](#로컬-실행)
 - [빌드와 검증](#빌드와-검증)
 - [배포](#배포)
@@ -141,6 +142,32 @@ tags:
 - `toc`는 글의 목차 표시 여부를 제어합니다.
 - 글 이미지는 `assets/images` 아래에 저장하고 본문에서는 `/assets/images/...` 절대 경로로 참조합니다.
 
+### Mermaid 다이어그램
+
+Mermaid를 렌더링하는 글은 게시글의 front matter에 `mermaid: true`를 추가합니다. Chirpy가 해당 글에서 Mermaid 스크립트를 로드합니다. `post.sh`의 기본 템플릿에는 이 값이 없으므로 필요한 글에 직접 추가합니다.
+
+시스템 구조·흐름·분기는 `flowchart`, 시간 순서가 중요한 요청·응답은 `sequenceDiagram`으로 작성합니다. 본문에는 다음과 같이 `mermaid` 언어를 지정한 코드 블록을 사용합니다.
+
+````markdown
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["클라이언트"] --> B["API"] --> C["DB"]
+```
+````
+
+코드 블록 안의 `config`는 해당 도식의 설정이며, 게시글 자체의 front matter와 구분합니다.
+
+- `theme: dark`는 현재 사이트의 고정 다크 배경에서 도식의 대비를 확보합니다. 사이트 테마와 자동으로 연동되지 않으므로 라이트 모드 도입이나 테마 정책 변경 시 함께 검토해야 합니다.
+- `flowchart.useMaxWidth: false`는 넓은 도식이 지나치게 축소되지 않도록 합니다. 도식 영역 안에서 가로 스크롤하여 전체 내용을 확인할 수 있습니다.
+- Sequence Diagram에는 `flowchart` 대신 `sequence` 아래에 `useMaxWidth: false`를 지정합니다.
+- 디렉터리 구조, 명령어 출력과 실제 코드 예시는 표현 목적에 맞는 일반 코드 블록으로 작성합니다.
+
 ## 로컬 실행
 
 Docker daemon이 실행 중인 상태에서 다음 명령을 사용합니다. 이미지 빌드, port 연결과 소스 volume 설정은 `local.sh`가 처리합니다.
@@ -172,6 +199,8 @@ production 사이트를 생성합니다.
 ```
 
 `test`는 production 빌드를 먼저 실행한 후 `html-proofer`를 수행합니다.
+
+Mermaid는 브라우저에서 렌더링되므로 위 검증만으로 도식 문법이나 실제 표시가 보장되지는 않습니다. 도식을 변경하면 Mermaid 문법 검사와 함께 로컬 서버에서 데스크톱·모바일 표시, 색상 대비와 도식 영역의 가로 스크롤도 확인합니다.
 
 로컬 이미지와 Jekyll 생성물을 정리합니다.
 

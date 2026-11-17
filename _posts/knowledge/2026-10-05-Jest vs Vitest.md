@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Jest vs Vitest"
 date: 2026-10-05T00:00:00
 toc: true
@@ -136,12 +137,18 @@ Vitest는 Vite의 모듈 그래프를 활용해서 변경된 코드와 연관된
 
 그래서
 
-```
-코드 수정
- ↓
-Vitest가 변경 감지
- ↓
-관련 테스트만 재실행
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["코드 수정"]
+    N1["Vitest가 변경 감지"]
+    N2["관련 테스트만 재실행"]
+    N0 --> N1 --> N2
 ```
 
 하는 개발 사이클이 상당히 빠릅니다.

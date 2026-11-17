@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "사설 IP 대역과 NAT Gateway가 필요한 이유"
 date: 2026-08-31T00:00:00
 toc: true
@@ -57,15 +58,16 @@ tags:
 
 예를 들어 VPC를 이렇게 만들 수 있습니다.
 
-```
-VPC
-10.0.0.0/16
-
-├─ Public Subnet
-│  └─ 10.0.1.0/24
-│
-└─ Private Subnet
-   └─ 10.0.2.0/24
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    V["VPC: 10.0.0.0/16"] --> P["Public Subnet: 10.0.1.0/24"]
+    V --> R["Private Subnet: 10.0.2.0/24"]
 ```
 
 ---
@@ -125,16 +127,19 @@ VPC
 
 공유기 역시 NAT 역할을 하기 때문에:
 
-```
-PC
-192.168.0.10
-    ↓
-공유기 NAT
-    ↓
-공인 IP
-211.xxx.xxx.xxx
-    ↓
-인터넷
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["PC: 192.168.0.10"]
+    N1["공유기 NAT"]
+    N2["공인 IP: 211.xxx.xxx.xxx"]
+    N3["인터넷"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 구조로 인터넷에 접속합니다.
@@ -201,10 +206,17 @@ IPv4 주소는 약 43억 개밖에 존재하지 않습니다.
 
 문제는 Google이 응답할 때입니다.
 
-```
-Google
-   ↓
-10.0.2.10으로 응답
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Google"]
+    N1["10.0.2.10으로 응답"]
+    N0 --> N1
 ```
 
 그런데 인터넷 전체에는 `10.0.2.10`이라는 서버가 수없이 많을 수 있습니다.
@@ -235,18 +247,18 @@ NAT는 "Network Address Translation", 즉 네트워크 주소 변환입니다.
 
 예를 들어:
 
-```
-Private Server
-10.0.2.10
-
-      ↓
-
-NAT Gateway
-공인 IP: 203.0.113.10
-
-      ↓
-
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Private Server: 10.0.2.10"]
+    N1["NAT Gateway<br/>공인 IP: 203.0.113.10"]
+    N2["Internet"]
+    N0 --> N1 --> N2
 ```
 
 서버가 인터넷에 요청하면 NAT Gateway에서 다음처럼 변경합니다.
@@ -281,26 +293,36 @@ NAT Gateway는 자신이 수행한 변환 정보를 관리합니다.
 
 처음 요청:
 
-```
-10.0.2.10
-   ↓
-NAT GW
-   ↓
-203.0.113.10
-   ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["10.0.2.10"]
+    N1["NAT GW"]
+    N2["203.0.113.10"]
+    N3["Internet"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 응답:
 
-```
-Internet
-   ↓
-203.0.113.10
-   ↓
-NAT GW
-   ↓
-10.0.2.10
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Internet"]
+    N1["203.0.113.10"]
+    N2["NAT GW"]
+    N3["10.0.2.10"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 즉 NAT Gateway가:
@@ -336,19 +358,21 @@ docker pull nginx
 
 트래픽 흐름은 보통:
 
-```
-Private Server
-10.0.2.10
-    ↓
-Route Table
-    ↓
-NAT Gateway
-    ↓
-Internet Gateway
-    ↓
-Internet
-    ↓
-Docker Hub
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Private Server: 10.0.2.10"]
+    N1["Route Table"]
+    N2["NAT Gateway"]
+    N3["Internet Gateway"]
+    N4["Internet"]
+    N5["Docker Hub"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 형태입니다.
@@ -364,12 +388,16 @@ Destination       Target
 
 의미는:
 
-```
-10.0.0.0/16으로 가는 트래픽
-→ VPC 내부 통신
-
-그 외 모든 주소(0.0.0.0/0)
-→ NAT Gateway
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A{"목적지 주소"} -->|"10.0.0.0/16"| B["VPC 내부 통신"]
+    A -->|"그 외: 0.0.0.0/0"| C["NAT Gateway"]
 ```
 
 입니다.
@@ -392,14 +420,19 @@ Public IP: 223.xxx.xxx.xxx
 
 따라서 일반적으로:
 
-```
-Public Server
-    ↓
-Route Table
-    ↓
-Internet Gateway
-    ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Public Server"]
+    N1["Route Table"]
+    N2["Internet Gateway"]
+    N3["Internet"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 으로 나갈 수 있습니다.
@@ -413,14 +446,19 @@ Private IP만 있음
 
 이라면:
 
-```
-Private Server
-    ↓
-NAT Gateway
-    ↓
-Internet Gateway
-    ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Private Server"]
+    N1["NAT Gateway"]
+    N2["Internet Gateway"]
+    N3["Internet"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 구조가 필요합니다.
@@ -441,19 +479,20 @@ Internet
 
 따라서 Private Subnet의 인터넷 통신은 개념적으로:
 
-```
-Private Server
-10.0.2.10
-     ↓
-Route Table
-     ↓
-NAT GW
-주소 변환
-     ↓
-IGW
-인터넷 출입구
-     ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Private Server: 10.0.2.10"]
+    N1["Route Table"]
+    N2["NAT GW: 주소 변환"]
+    N3["IGW: 인터넷 출입구"]
+    N4["Internet"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 이라고 이해하면 됩니다.
@@ -473,22 +512,33 @@ Internet
 
 예를 들어 내부 통신은 NAT Gateway가 필요 없습니다.
 
-```
-10.0.1.10
-    ↓
-10.0.2.20
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["10.0.1.10"]
+    N1["10.0.2.20"]
+    N0 --> N1
 ```
 
 둘 다 같은 VPC 안에 있다면:
 
-```
-Server A
-10.0.1.10
-    ↓
-VPC 내부 라우팅
-    ↓
-Server B
-10.0.2.20
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Server A: 10.0.1.10"]
+    N1["VPC 내부 라우팅"]
+    N2["Server B: 10.0.2.20"]
+    N0 --> N1 --> N2
 ```
 
 이면 됩니다.
@@ -527,17 +577,20 @@ VPC 내부 통신
 
 따라서 공인 IP가 없는 사설 IP 서버가 인터넷으로 나갈 때는:
 
-```
-Private Server
-      ↓
-Route Table
-      ↓
-NAT Gateway
-사설 IP → 공인 IP 변환
-      ↓
-Internet Gateway
-      ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Private Server"]
+    N1["Route Table"]
+    N2["NAT Gateway: 사설 IP → 공인 IP 변환"]
+    N3["Internet Gateway"]
+    N4["Internet"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 구조를 사용합니다.

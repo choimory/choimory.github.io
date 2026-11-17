@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Batch vs Queue, Batch Only vs Batch to Queue"
 date: 2026-08-04T00:00:00
 toc: true
@@ -127,18 +128,36 @@ Queue의 핵심 역할은 세 가지입니다.
 
 메시지를 순서대로 하나씩 전달합니다. 대표적으로 Redis List, SQS Standard가 있습니다.
 
-```
-Producer → [msg5, msg4, msg3, msg2, msg1] → Consumer
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Producer"]
+    N1["Queue: msg5, msg4, msg3, msg2, msg1"]
+    N2["Consumer"]
+    N0 --> N1 --> N2
 ```
 
 #### Topic / Pub-Sub
 
 하나의 메시지를 여러 소비자에게 동시에 전달합니다. 대표적으로 Kafka Topic, SNS가 있습니다.
 
-```
-Producer → Topic → Consumer A
-                  → Consumer B
-                  → Consumer C
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    P["Producer"] --> T["Topic"]
+    T --> A["Consumer A"]
+    T --> B["Consumer B"]
+    T --> C["Consumer C"]
 ```
 
 #### Priority Queue
@@ -208,35 +227,40 @@ class NotificationConsumer {
 
 Batch와 Queue는 서로 대체재가 아니라 보완재입니다. 실무에서는 자주 함께 쓰입니다.
 
-```
-[패턴 1] Queue → Batch
-대량 주문 이벤트가 Kafka에 쌓이면
-→ 새벽에 배치가 Kafka에서 읽어 정산 처리
-
-[패턴 2] Batch → Queue
-정산 배치가 완료되면
-→ 결과를 Kafka에 발행 → 알림 서비스가 소비
-
-[패턴 3] Micro-batch
-Kafka Consumer가 메시지를 일정 건수만큼 모아서
-→ 한 번에 DB에 Bulk Insert (Queue + Batch 혼합)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph P1["패턴 1: Queue → Batch"]
+        K["Kafka: 대량 주문 이벤트 축적"] --> B["새벽 배치: Kafka에서 읽어 정산"]
+    end
+    subgraph P2["패턴 2: Batch → Queue"]
+        S["정산 배치 완료"] --> E["Kafka에 결과 발행"] --> N["알림 서비스 소비"]
+    end
+    subgraph P3["패턴 3: Micro-batch — Queue + Batch"]
+        C["Kafka Consumer"] --> M["메시지를 일정 건수만큼 모음"] --> D["DB Bulk Insert"]
+    end
 ```
 
 ### 선택 기준
 
-```
-즉시 처리가 필요한가?
-  → Yes: Queue 사용
-  → No: Batch로 충분
-
-데이터 양이 매우 많고 주기적인가?
-  → Yes: Batch 적합
-
-서비스 간 이벤트를 전달해야 하는가?
-  → Yes: Queue 필수
-
-두 조건 모두 해당하는가?
-  → Queue + Batch 함께 설계
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A{"즉시 처리가 필요한가?"} -->|"Yes"| Q["Queue 사용"]
+    A -->|"No"| B["Batch로 충분"]
+    C{"데이터가 매우 많고 주기적인가?"} -->|"Yes"| D["Batch 적합"]
+    E{"서비스 간 이벤트를 전달해야 하는가?"} -->|"Yes"| F["Queue 필수"]
+    G{"두 조건 모두 해당하는가?"} --> H["Queue + Batch 함께 설계"]
 ```
 
 ---
@@ -266,14 +290,21 @@ Kafka Consumer가 메시지를 일정 건수만큼 모아서
 
 배치 Job이 데이터 읽기 → 처리 → 후속 작업(알림, 외부 API 호출, 상태 업데이트 등)까지 모두 직접 수행합니다.
 
-```
-[Batch Job]
-  Reader → Processor → Writer
-                         ↓
-               (직접) 이메일 발송
-               (직접) 푸시 알림
-               (직접) 외부 API 호출
-               (직접) 다른 테이블 업데이트
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph B["Batch Job"]
+        R["Reader"] --> P["Processor"] --> W["Writer"]
+        W --> E["직접 이메일 발송"]
+        W --> N["직접 푸시 알림"]
+        W --> A["직접 외부 API 호출"]
+        W --> T["직접 다른 테이블 업데이트"]
+    end
 ```
 
 ### 동작 예시: 정산 후 알림 발송
@@ -303,22 +334,38 @@ class SettlementItemWriter(
 
 #### 단일 실패가 전체에 영향
 
-```
-1000건 처리 중 700번째 이메일 발송 실패
-→ Writer 예외 발생
-→ 청크(Chunk) 전체 롤백
-→ 700건 정산 데이터도 함께 롤백
-→ 재시작 시 700건 재처리
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["1000건 처리 중 700번째 이메일 발송 실패"]
+    N1["Writer 예외 발생"]
+    N2["청크 전체 롤백"]
+    N3["700건 정산 데이터도 함께 롤백"]
+    N4["재시작 시 700건 재처리"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 정산(DB 저장)과 알림(이메일)은 성격이 다른 작업인데, 하나의 트랜잭션 경계 안에 묶여 있어 서로 영향을 줍니다.
 
 #### 외부 시스템 장애가 배치를 멈춤
 
-```
-이메일 서버 일시 장애 (30분)
-→ 배치 전체가 30분간 블로킹 or 실패
-→ 정산이라는 핵심 작업도 함께 중단
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["이메일 서버 일시 장애: 30분"]
+    N1["배치 전체가 30분간 블로킹 또는 실패"]
+    N2["핵심 정산 작업도 함께 중단"]
+    N0 --> N1 --> N2
 ```
 
 #### 속도 병목
@@ -351,16 +398,20 @@ Batch Only가 나쁜 것은 아닙니다. 아래 조건에서는 오히려 단�
 
 배치 Job은 "핵심 처리(정산, 집계 등)"만 담당하고, 결과를 Queue(Kafka, RabbitMQ 등)에 발행합니다. 후속 작업(알림, 외부 연동 등)은 별도 Consumer 서비스가 독립적으로 처리합니다.
 
-```
-[Batch Job]
-  Reader → Processor → Writer
-                         ↓
-               Queue에 이벤트 발행
-               (정산완료 이벤트)
-
-[Consumer A] 이메일 서비스 → 이메일 발송
-[Consumer B] 푸시 서비스  → 푸시 알림
-[Consumer C] Slack 서비스 → Slack 알림
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph B["Batch Job"]
+        R["Reader"] --> P["Processor"] --> W["Writer"] --> Q["Queue에 정산완료 이벤트 발행"]
+    end
+    Q --> A["Consumer A: 이메일 서비스"] --> E["이메일 발송"]
+    Q --> C["Consumer B: 푸시 서비스"] --> N["푸시 알림"]
+    Q --> D["Consumer C: Slack 서비스"] --> S["Slack 알림"]
 ```
 
 ### 동작 예시: 정산 후 이벤트 발행
@@ -438,12 +489,17 @@ Consumer의 책임: 각자의 후속 작업
 
 #### 장애 격리 (Fault Isolation)
 
-```
-이메일 서버 장애 발생
-→ 이메일 Consumer만 실패
-→ 배치 Job은 정상 완료
-→ 푸시 Consumer도 정상 동작
-→ 이메일 메시지는 Kafka에 보존 → 서버 복구 후 재처리
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    E["이메일 서버 장애 발생"] --> C["이메일 Consumer만 실패"] --> K["이메일 메시지는 Kafka에 보존"] --> R["서버 복구 후 재처리"]
+    B["배치 Job: 정상 완료"]
+    P["푸시 Consumer: 정상 동작"]
 ```
 
 #### 처리 속도 향상
@@ -459,20 +515,36 @@ Batch → Queue:
 
 #### 독립적 스케일링
 
-```
-알림 발송이 느려질 경우
-→ Consumer 인스턴스만 수평 확장
-→ 배치 Job은 그대로 유지
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["알림 발송이 느려짐"]
+    N1["Consumer 인스턴스만 수평 확장"]
+    N2["배치 Job은 그대로 유지"]
+    N0 --> N1 --> N2
 ```
 
 ### 주의할 점
 
 #### 이벤트 발행과 DB 저장의 정합성
 
-```
-정산 DB 저장 성공
-→ Kafka 발행 실패
-→ 이메일이 영영 발송되지 않음
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["정산 DB 저장 성공"]
+    N1["Kafka 발행 실패"]
+    N2["이메일이 영영 발송되지 않음"]
+    N0 --> N1 --> N2
 ```
 
 이 문제는 "Outbox Pattern"으로 해결합니다. DB 저장과 이벤트 발행을 같은 트랜잭션으로 묶는 대신, 이벤트를 DB의 Outbox 테이블에 함께 저장하고 별도 프로세스가 Kafka에 발행합니다.
@@ -529,18 +601,18 @@ fun handle(event: SettlementCompletedEvent, ack: Acknowledgment) {
 
 ### 선택 기준
 
-```
-후속 작업이 외부 시스템 호출을 포함하는가?
-  → Yes: Batch → Queue 고려
-
-후속 작업의 종류가 앞으로 늘어날 가능성이 있는가?
-  → Yes: Batch → Queue (OCP 확보)
-
-팀이 Kafka 등 Broker 운영 여건이 되는가?
-  → No: Batch Only로 시작, 이후 전환
-
-배치 처리 속도가 병목인가?
-  → Yes: Batch → Queue로 비동기 분리
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A{"후속 작업에 외부 시스템 호출 포함?"} -->|"Yes"| B["Batch → Queue 고려"]
+    C{"후속 작업 종류가 늘어날 가능성?"} -->|"Yes"| D["Batch → Queue: OCP 확보"]
+    E{"Broker 운영 여건이 되는가?"} -->|"No"| F["Batch Only로 시작 후 전환"]
+    G{"배치 처리 속도가 병목인가?"} -->|"Yes"| H["Batch → Queue로 비동기 분리"]
 ```
 
 ---
