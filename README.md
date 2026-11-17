@@ -7,6 +7,8 @@
 - [기술 스택](#기술-스택)
 - [콘텐츠 아키텍처](#콘텐츠-아키텍처)
 - [메뉴와 화면 구성](#메뉴와-화면-구성)
+  - [브라우저 제목과 프로필 이름](#브라우저-제목과-프로필-이름)
+  - [파비콘과 설치용 아이콘](#파비콘과-설치용-아이콘)
 - [프로젝트 구조](#프로젝트-구조)
 - [글 작성](#글-작성)
   - [Mermaid 다이어그램](#mermaid-다이어그램)
@@ -72,6 +74,39 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 
 사이트 언어는 `ko-KR`이며 `_data/locales/ko-KR.yml`에서 사이드바 탭 이름만 영어로 덮어씁니다. 사이트명, 소개, 프로필 이미지와 기타 전역 설정은 `_config.yml`에서 관리합니다.
 
+### 브라우저 제목과 프로필 이름
+
+`_config.yml`에서 좌측 프로필 이름과 브라우저 탭 제목을 별도로 지정합니다.
+
+```yaml
+title: choimory
+browser_title: choimory-blog
+```
+
+| 설정 | 표시 위치 |
+| --- | --- |
+| `title` | 좌측 프로필 이름, SEO 사이트명, PWA 이름 |
+| `browser_title` | 홈의 탭 제목 및 다른 페이지의 탭 제목 접미사 |
+
+홈의 탭 제목은 `choimory-blog`, 글 상세는 `글 제목 | choimory-blog`로 표시합니다. `_includes/head.html`이 이 구분을 처리하며, `browser_title`이 없으면 `title`을 사용합니다. 테마의 head 템플릿을 덮어쓰므로 Chirpy 업데이트 시 해당 템플릿의 변경 사항도 비교합니다.
+
+### 파비콘과 설치용 아이콘
+
+아이콘은 `assets/img/favicons/`에서 관리하고, `_includes/favicons.html`이 브라우저와 홈 화면용 링크를 출력합니다. 브라우저용 PNG·ICO는 원형이며 바깥 영역은 투명합니다. 사진 기반 아이콘이므로 테마 기본 SVG는 연결하지 않습니다.
+
+| 파일 | 용도 및 규격 |
+| --- | --- |
+| `favicon.ico` | 브라우저용 16·32·48px 프레임 |
+| `favicon-96x96.png` | 브라우저용 96×96 PNG |
+| `apple-touch-icon.png` | 홈 화면용 180×180 PNG |
+| `web-app-manifest-192x192.png` | PWA용 192×192, `purpose: any` |
+| `web-app-manifest-512x512.png` | PWA용 512×512, `purpose: maskable` |
+| `site.webmanifest` | PWA 이름, 시작 URL, 아이콘과 표시 설정 |
+
+PWA가 활성화되면 manifest를 연결합니다. 홈 화면·설치용 이미지는 정사각형으로 준비하며 실제 모양은 운영체제의 마스크 규칙에 따라 달라질 수 있습니다. 512px 마스크용 아이콘은 얼굴이 잘리지 않도록 여백을 포함합니다.
+
+아이콘 URL에는 캐시 갱신용 버전 쿼리가 붙습니다. 아이콘을 교체할 때는 `_includes/favicons.html`과 `assets/img/favicons/site.webmanifest`의 `favicon_version`을 함께 갱신합니다. 현재 값은 `20261118-2`입니다. 변경 후에는 파일 규격, manifest 해석, 브라우저의 이미지 로딩과 투명도를 확인합니다.
+
 ## 프로젝트 구조
 
 ```text
@@ -83,6 +118,9 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 │   ├── contact.yml                # 사이드바 연락처 링크
 │   ├── locales/ko-KR.yml          # 한국어 UI의 탭 이름 재정의
 │   └── share.yml                  # 글 공유 서비스
+├── _includes/
+│   ├── head.html                  # 탭 제목과 프로필 이름 분리
+│   └── favicons.html              # 파비콘과 manifest 연결
 ├── _layouts/section.html          # Experiences/Knowledge 연도별 목록
 ├── _plugins/posts-lastmod-hook.rb # Git 이력 기반 최종 수정일 계산
 ├── _posts/
@@ -90,6 +128,7 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 │   └── knowledge/                 # 개념과 기술 지식
 ├── _tabs/                         # 사이드바 탭 페이지와 표시 순서
 ├── assets/images/                 # 프로필 및 글 첨부 이미지
+├── assets/img/favicons/            # 브라우저·홈 화면·PWA 아이콘과 manifest
 ├── Dockerfile                     # Ruby 3.3 기반 로컬 실행 이미지
 ├── Gemfile                        # Ruby gem 의존성
 ├── Gemfile.lock                   # 해석된 의존성 버전
