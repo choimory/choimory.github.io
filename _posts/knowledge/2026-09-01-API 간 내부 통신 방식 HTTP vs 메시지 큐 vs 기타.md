@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "API 간 내부 통신 방식: HTTP vs 메시지 큐 vs 기타"
 date: 2026-09-01T00:00:00
 toc: true
@@ -35,15 +36,15 @@ MSA에서 API 간 내부 통신은 크게 "동기 통신"과 "비동기 통신"�
 
 가장 일반적인 API 간 동기 통신 방식입니다.
 
-```
-회원 API
-   │
-   │ GET /members/123
-   ▼
-예약 API
-   │
-   ▼
-회원 정보 응답
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["회원 API"] -->|"GET /members/123"| B["예약 API"] --> C["회원 정보 응답"]
 ```
 
 호출자는 요청을 보내고 상대방의 응답을 기다립니다.
@@ -52,16 +53,19 @@ MSA에서 API 간 내부 통신은 크게 "동기 통신"과 "비동기 통신"�
 
 예를 들어 예약을 생성하는 과정에서 회원 상태를 확인해야 한다면:
 
-```
-Reservation API
-      │
-      ├── HTTP → Member API
-      │             │
-      │             └── 회원 조회
-      │
-      ← 응답
-      │
-      └── 예약 생성
+```mermaid
+---
+config:
+  theme: dark
+  sequence:
+    useMaxWidth: false
+---
+sequenceDiagram
+    participant R as Reservation API
+    participant M as Member API
+    R->>M: HTTP 회원 조회
+    M-->>R: 회원 정보 응답
+    R->>R: 예약 생성
 ```
 
 회원 조회 결과가 없으면 다음 로직을 실행할 수 없으므로 HTTP가 자연스럽습니다.
@@ -77,18 +81,34 @@ Reservation API
 
 서비스 간 결합이 생깁니다.
 
-```
-A → B → C
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["A"]
+    N1["B"]
+    N2["C"]
+    N0 --> N1 --> N2
 ```
 
 이 구조에서 C가 느려지면:
 
-```
-C 지연
-↓
-B 지연
-↓
-A 지연
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["C 지연"]
+    N1["B 지연"]
+    N2["A 지연"]
+    N0 --> N1 --> N2
 ```
 
 으로 전파될 수 있습니다.
@@ -101,16 +121,18 @@ A 지연
 
 RabbitMQ, Kafka, SQS 같은 메시징 시스템을 이용하는 방식입니다.
 
-```
-Order API
-    │
-    │ 주문완료 이벤트
-    ▼
-Message Broker
-    │
-    ├── Notification API
-    ├── Point API
-    └── Analytics API
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    O["Order API"] -->|"주문완료 이벤트"| B["Message Broker"]
+    B --> N["Notification API"]
+    B --> P["Point API"]
+    B --> A["Analytics API"]
 ```
 
 Order API는 다른 API의 처리가 끝날 때까지 기다리지 않습니다.
@@ -125,16 +147,18 @@ Order API는 다른 API의 처리가 끝날 때까지 기다리지 않습니다.
 
 후 다음 작업들이 있다고 가정합니다.
 
-```
-Member API
-     │
-     └── MemberCreated
-              │
-              ▼
-           Broker
-          /   |   \
-         /    |    \
-      Mail   Point  Analytics
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["Member API"] -->|"MemberCreated"| B["Broker"]
+    B --> A["Mail"]
+    B --> P["Point"]
+    B --> N["Analytics"]
 ```
 
 메일 발송이나 통계 저장이 끝나야 회원가입 성공을 반환할 필요는 없습니다.
@@ -145,12 +169,15 @@ Member API
 
 서비스 간 결합도가 낮아집니다.
 
-```
-Member API
-
-"회원 생성됨"
-     ↓
-Broker
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["Member API"] -->|"회원 생성됨"| B["Broker"]
 ```
 
 Member API는 누가 이 이벤트를 사용하는지 몰라도 됩니다.
@@ -182,12 +209,15 @@ Idempotency
 
 ### Case 1. 문자 전송 결과가 즉시 필요한 경우
 
-```
-Member API
-   │
-   └── HTTP → Notification API
-                   │
-                   └── SMS Provider
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["Member API"] -->|"HTTP"| N["Notification API"] --> S["SMS Provider"]
 ```
 
 예:
@@ -209,16 +239,15 @@ POST /sms
 
 ### Case 2. 문자만 보내면 되는 경우
 
-```
-Member API
-    │
-    └── SMS_REQUESTED
-             │
-             ▼
-           Queue
-             │
-             ▼
-     Notification API
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["Member API"] -->|"SMS_REQUESTED"| Q["Queue"] --> N["Notification API"]
 ```
 
 Member API는:
@@ -237,12 +266,15 @@ Member API는:
 
 HTTP REST 대신 내부 API 통신에 gRPC를 사용하는 방법도 있습니다.
 
-```
-Service A
-   │
-   │ gRPC
-   ▼
-Service B
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Service A"] -->|"gRPC"| B["Service B"]
 ```
 
 Protocol Buffers를 사용합니다.
@@ -286,16 +318,18 @@ Kafka는 단순히 "Queue의 빠른 버전"으로 이해하면 약간 다릅니�
 
 Kafka는 Event Streaming 플랫폼에 가깝습니다.
 
-```
-Order API
-    │
-    └── OrderCreated
-            │
-            ▼
-         Kafka
-       ┌────┼────┐
-       ▼    ▼    ▼
-     Pay   Point Analytics
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    O["Order API"] -->|"OrderCreated"| K["Kafka"]
+    K --> P["Pay"]
+    K --> N["Point"]
+    K --> A["Analytics"]
 ```
 
 그리고 이벤트를 일정 기간 저장합니다.
@@ -339,14 +373,19 @@ SMS Job
 Push Job
 ```
 
-```
-API
- │
- └── Queue
-       │
-       └── Worker
-             │
-             └── SMS Provider
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["API"]
+    N1["Queue"]
+    N2["Worker"]
+    N3["SMS Provider"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 즉,
@@ -369,13 +408,17 @@ Redis에는 Pub/Sub과 Streams가 있습니다.
 
 ### Redis Pub/Sub
 
-```
-Publisher
-    │
-    ▼
-Redis
-   ├── Consumer A
-   └── Consumer B
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    P["Publisher"] --> R["Redis"]
+    R --> A["Consumer A"]
+    R --> B["Consumer B"]
 ```
 
 매우 간단하지만 메시지 내구성이 약합니다.
@@ -388,14 +431,17 @@ Consumer가 없으면 메시지를 놓칠 수 있습니다.
 
 Kafka와 비슷한 구조를 어느 정도 제공합니다.
 
-```
-Producer
-   │
-   ▼
-Redis Stream
-   │
-   ├── Consumer Group A
-   └── Consumer Group B
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    P["Producer"] --> R["Redis Stream"]
+    R --> A["Consumer Group A"]
+    R --> B["Consumer Group B"]
 ```
 
 작은 시스템이라면 Kafka를 도입하기 전에 선택할 수도 있습니다.
@@ -425,16 +471,20 @@ Redis Stream
 
 예를 들어:
 
-```
-                   ┌──── HTTP ──── Member API
-                   │
-Reservation API ───┼──── HTTP ──── Facility API
-                   │
-                   └──── Event ───▶ Kafka
-                                      │
-                         ┌────────────┼────────────┐
-                         ▼            ▼            ▼
-                    Notification   Analytics    Logging
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Reservation API"] -->|"HTTP"| M["Member API"]
+    R -->|"HTTP"| F["Facility API"]
+    R -->|"Event"| K["Kafka"]
+    K --> N["Notification"]
+    K --> A["Analytics"]
+    K --> L["Logging"]
 ```
 
 예약 생성 과정에서 회원 정보와 시설 정보는 "지금 필요"하므로 HTTP입니다.
@@ -487,10 +537,17 @@ Event
 
 그리고 Command는 상황에 따라 나뉩니다.
 
-```
-Command
-├── 결과 필요 → HTTP / gRPC
-└── 결과 불필요 → Queue
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Command"] --> R{"결과가 필요한가?"}
+    R -->|"필요"| H["HTTP / gRPC"]
+    R -->|"불필요"| Q["Queue"]
 ```
 
 ---
@@ -499,20 +556,20 @@ Command
 
 API 간 통신 방식을 결정할 때는 다음 기준으로 보면 됩니다.
 
-```
-          API 간 통신
-              │
-   결과를 지금 기다려야 하는가?
-        /              \
-      YES              NO
-       │                │
-HTTP / gRPC        Queue / Event
-       │                │
-   조회/명령        비동기 후처리
-                    │
-       ┌────────────┼────────────┐
-    RabbitMQ       SQS          Kafka
-    작업 Queue    관리형 Queue   Event Stream
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["API 간 통신"] --> B{"결과를 지금 기다려야 하는가?"}
+    B -->|"YES"| H["HTTP / gRPC"] --> C["조회 / 명령"]
+    B -->|"NO"| Q["Queue / Event"] --> P["비동기 후처리"]
+    P --> R["RabbitMQ: 작업 Queue"]
+    P --> S["SQS: 관리형 Queue"]
+    P --> K["Kafka: Event Stream"]
 ```
 
 가장 추천하는 기본 원칙은 다음입니다.

@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "JPA Transaction"
 date: 2025-08-16T00:00:00
 toc: true
@@ -105,11 +106,28 @@ try {
 
 스프링은 `TransactionInterceptor`라는 AOP 어드바이스를 사용해서 트랜잭션을 처리하는것이 핵심
 
-```
-클라이언트 → 프록시 → TransactionInterceptor
-                   ↳ PlatformTransactionManager를 통해 트랜잭션 시작
-                   ↳ 실제 비즈니스 로직 호출
-                   ↳ 성공 시 커밋 / 예외 시 롤백
+```mermaid
+---
+config:
+  theme: dark
+  sequence:
+    useMaxWidth: false
+---
+sequenceDiagram
+    participant C as 클라이언트
+    participant P as 프록시
+    participant I as TransactionInterceptor
+    participant T as PlatformTransactionManager
+    participant B as 비즈니스 로직
+    C->>P: 요청
+    P->>I: 트랜잭션 어드바이스
+    I->>T: 트랜잭션 시작
+    I->>B: 실제 비즈니스 로직 호출
+    alt 성공
+        I->>T: 커밋
+    else 예외
+        I->>T: 롤백
+    end
 ```
 
 ### 3. 중요한 점
@@ -121,11 +139,9 @@ try {
 
 ### 4. 요약
 
-```markdown
 | 구분 | 설명 |
 | --- | --- |
 | 방식 | AOP 기반 트랜잭션 처리 |
 | 구현 | 프록시 객체 생성 (JDK or CGLIB) |
 | 내부 처리 | `TransactionInterceptor`가 트랜잭션 시작/커밋/롤백 제어 |
 | 핵심 인터페이스 | `PlatformTransactionManager`, `TransactionDefinition`, `TransactionStatus` |
-```

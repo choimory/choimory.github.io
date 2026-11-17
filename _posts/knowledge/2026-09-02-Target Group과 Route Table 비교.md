@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Target Group과 Route Table 비교"
 date: 2026-09-02T00:00:00
 toc: true
@@ -73,13 +74,18 @@ Round Robin(기본), Least Outstanding Requests, Random, Weighted 등이 있습�
 
 Route Table은 "나가는 패킷의 경로" 만 결정합니다. "인바운드/아웃바운드 둘 다" 처럼 느껴지는 이유는 서브넷마다 Route Table이 붙어있어서, 양쪽 서브넷 각각에서 아웃바운드를 정의하기 때문입니다.
 
-```
-클라이언트 (10.0.1.x)          서버 (10.0.2.x)
-      │                              │
-      │ 아웃바운드 → Route Table A   │
-      │ ─────────────────────────►  │
-      │                              │ 아웃바운드 → Route Table B
-      │ ◄─────────────────────────  │
+```mermaid
+---
+config:
+  theme: dark
+  sequence:
+    useMaxWidth: false
+---
+sequenceDiagram
+    participant C as 클라이언트: 10.0.1.x
+    participant S as 서버: 10.0.2.x
+    C->>S: 아웃바운드: Route Table A
+    S-->>C: 아웃바운드: Route Table B
 ```
 
 인바운드 트래픽 제어는 Route Table이 아니라 Security Group / NACL의 역할입니다.
@@ -88,17 +94,19 @@ Route Table은 "나가는 패킷의 경로" 만 결정합니다. "인바운드/�
 
 Target Group은 "로드밸런서가 수신한 요청을 어디로 넘길지" 만 정의합니다. 응답(Response)은 Target Group을 거치지 않고 서버에서 클라이언트로 직접 돌아갑니다.
 
-```
-외부 요청
-   │
-   ▼
-[Load Balancer]  ←── 여기까지가 인바운드 수신
-   │
-   ▼
-[Target Group]   ←── 어느 서버로 넘길지 결정
-   │
-   ▼
-[EC2 / Lambda]
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["외부 요청"]
+    N1["Load Balancer: 인바운드 수신"]
+    N2["Target Group: 어느 서버로 넘길지 결정"]
+    N3["EC2 / Lambda"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 ### 인바운드/아웃바운드 제어 주체 정리
@@ -114,15 +122,23 @@ Target Group은 "로드밸런서가 수신한 요청을 어디로 넘길지" 만
 
 Route Table처럼 백엔드 서버에서 나가는 방향을 Target Group이 제어하는 개념은 존재하지 않습니다. Load Balancer + Target Group은 "요청을 받아서 분배하는 프록시" 이기 때문입니다.
 
-```
-클라이언트
-   │  요청
-   ▼
-[ALB]  → Target Group → [EC2]
-              
-[EC2]  → 응답을 ALB로 직접 돌려줌
-              
-[ALB]  → 클라이언트로 응답 전달
+```mermaid
+---
+config:
+  theme: dark
+  sequence:
+    useMaxWidth: false
+---
+sequenceDiagram
+    participant C as 클라이언트
+    participant A as ALB
+    participant T as Target Group
+    participant E as EC2
+    C->>A: 요청
+    A->>T: 대상 참조
+    A->>E: 선택한 대상으로 요청 전달
+    E-->>A: 직접 응답
+    A-->>C: 응답 전달
 ```
 
 백엔드(EC2)의 응답이 ALB로 돌아오는 것은 Target Group이 제어하는 게 아니라, TCP 커넥션이 유지되기 때문에 자동으로 되돌아오는 것입니다.
@@ -154,16 +170,19 @@ NAT(Network Address Translation)은 "주소를 변환한다" 는 뜻일 뿐, 방
 
 IGW는 인바운드 시 "목적지 Public IP를 목적지 Private IP로 바꿔치기" 합니다. 이것이 정확히 DNAT입니다.
 
-```
-[인바운드 - DNAT]
-클라이언트 → 목적지: 1.2.3.4 (Public IP)
-                  │
-                  ▼ IGW가 DNAT 수행
-                  │
-            목적지: 10.0.1.5 (Private IP)로 변경
-                  │
-                  ▼
-                 EC2
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["인바운드: 클라이언트 요청<br/>목적지: 1.2.3.4 — Public IP"]
+    N1["IGW: DNAT 수행"]
+    N2["목적지: 10.0.1.5 — Private IP로 변경"]
+    N3["EC2"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 반대로 EC2가 응답을 내보낼 때는 IGW가 SNAT을 수행해서 출발지를 다시 Private → Public으로 바꿔줍니다. 이는 응답이라 새로운 라우팅 결정이 필요 없는 흐름이라 Route Table과는 무관합니다.
@@ -177,20 +196,19 @@ NAT Gateway는 프라이빗 서브넷의 "나가는 트래픽 전용" 이라 인
 
 ### 인바운드는 목적지가 이미 확정되어 들어온다
 
-```
-클라이언트가 EC2의 Public IP(1.2.3.4)로 요청을 보냄
-   │
-   ▼
-[IGW]
-   │  IGW는 1:1 NAT(DNAT) 매핑 테이블을 가지고 있음
-   │  Public IP(1.2.3.4) ←→ Private IP(10.0.1.5)
-   │  이 매핑으로 목적지를 Private IP로 변환
-   │
-   ▼
-목적지가 10.0.1.5로 확정됨
-   │
-   ▼
-VPC 내부 라우팅(자동, Local Route)으로 해당 서브넷의 ENI까지 직접 전달
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["클라이언트가 EC2 Public IP: 1.2.3.4로 요청"]
+    N1["IGW: 1:1 DNAT 매핑<br/>Public 1.2.3.4 ↔ Private 10.0.1.5"]
+    N2["목적지를 Private IP: 10.0.1.5로 확정"]
+    N3["VPC 내부 Local Route로<br/>해당 서브넷 ENI까지 전달"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 "어디로 보낼지 결정하는" 단계가 이미 IGW의 DNAT 매핑에서 끝나기 때문에 Route Table이 끼어들 필요가 없습니다.
@@ -221,12 +239,20 @@ Destination       Target
 
 ### 정리된 흐름
 
-```
-[인바운드]
-클라이언트 → IGW → (Route Table 대신 DNAT 매핑 확인) → Subnet (EC2)
-
-[아웃바운드]
-Subnet (EC2) → (Route Table에 적힌 규칙 확인) → NAT GW / 다른 Subnet / IGW / Peering 등
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph IN["인바운드"]
+        C["클라이언트"] --> I["IGW"] --> D["Route Table 대신 DNAT 매핑 확인"] --> S["Subnet: EC2"]
+    end
+    subgraph OUT["아웃바운드"]
+        E["Subnet: EC2"] --> R["Route Table 규칙 확인"] --> T["NAT GW / 다른 Subnet / IGW / Peering 등"]
+    end
 ```
 
 아웃바운드에서 Route Table에 적힌 목적지는 상황에 따라 다양하게 갈립니다.
@@ -250,14 +276,21 @@ Destination         Target
 
 Route Table은 서브넷에 종속되어 생성되는 게 아니라, VPC 레벨에서 독립적으로 만들어지는 리소스입니다.
 
-```
-VPC
- ├─ Route Table A (rtb-aaaa)  ←── 독립적으로 존재
- ├─ Route Table B (rtb-bbbb)  ←── 독립적으로 존재
- │
- ├─ Subnet 1  ──── associate ───→ Route Table A
- ├─ Subnet 2  ──── associate ───→ Route Table A
- └─ Subnet 3  ──── associate ───→ Route Table B
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph V["VPC"]
+        A["Route Table A: rtb-aaaa<br/>독립 객체"]
+        B["Route Table B: rtb-bbbb<br/>독립 객체"]
+        S1["Subnet 1"] -->|"associate"| A
+        S2["Subnet 2"] -->|"associate"| A
+        S3["Subnet 3"] -->|"associate"| B
+    end
 ```
 
 서브넷은 Route Table을 "연결(Association)" 할 뿐이지, 자기 안에 내장하고 있는 게 아닙니다.
@@ -272,20 +305,20 @@ VPC
 
 ### 패킷이 나갈 때 실제로 일어나는 일
 
-```
-EC2 인스턴스가 패킷을 보냄
-   │
-   ▼
-해당 EC2가 속한 Subnet 확인
-   │
-   ▼
-그 Subnet에 연결(Association)된 Route Table을 조회
-   │
-   ▼
-목적지 IP와 매칭되는 라우팅 규칙 찾음
-   │
-   ▼
-다음 홉(Target)으로 전달
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["EC2 인스턴스가 패킷 전송"]
+    N1["해당 EC2가 속한 Subnet 확인"]
+    N2["Subnet에 Association된 Route Table 조회"]
+    N3["목적지 IP와 매칭되는 라우팅 규칙 탐색"]
+    N4["다음 홉: Target으로 전달"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 패킷이 나갈 때마다 "이 서브넷은 어떤 Route Table을 보고 있더라" 하고 참조해서 그 안의 규칙을 확인하는 방식입니다.
@@ -294,11 +327,18 @@ EC2 인스턴스가 패킷을 보냄
 
 하나의 Route Table을 여러 서브넷이 동시에 참조할 수 있습니다. 반대로 한 서브넷은 동시에 두 개의 Route Table을 가질 수 없고, 항상 정확히 1개와 연결됩니다.
 
-```
-Route Table A
-   ├─ Subnet 1 (연결)
-   ├─ Subnet 2 (연결)
-   └─ Subnet 3 (연결)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Route Table A"]
+    R --> N0["Subnet 1: 연결"]
+    R --> N1["Subnet 2: 연결"]
+    R --> N2["Subnet 3: 연결"]
 ```
 
 ### Target Group과 동일한 패턴
@@ -318,16 +358,25 @@ Route Table A
 
 Target Group은 AWS의 ELB(Elastic Load Balancer) 서비스에 속한 개념으로, k8s 클러스터 외부, AWS 인프라 레벨에 존재합니다.
 
-```
-[ AWS 인프라 레벨 ]
-      │
-   [ALB]  ←── AWS가 관리
-      │
- [Target Group]  ←── AWS가 관리
-      │
-      ▼
-[ k8s 클러스터 ]
-   [Node1] [Node2] [Node3]  ←── Target Group의 멤버로 등록됨
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph A["AWS 인프라 레벨: AWS 관리"]
+        L["ALB"] --> T["Target Group"]
+    end
+    subgraph K["k8s 클러스터"]
+        N1["Node1"]
+        N2["Node2"]
+        N3["Node3"]
+    end
+    T -->|"멤버로 등록"| N1
+    T -->|"멤버로 등록"| N2
+    T -->|"멤버로 등록"| N3
 ```
 
 ### k8s 내부에서 대응되는 개념
@@ -342,36 +391,37 @@ Target Group은 AWS의 ELB(Elastic Load Balancer) 서비스에 속한 개념으�
 
 Target Group처럼 "실제 요청을 받을 Pod들의 IP:Port 목록" 을 관리합니다.
 
-```
-Service (my-service)
-   └─ Endpoints
-         ├─ 10.0.0.1:8080  (Pod1)
-         ├─ 10.0.0.2:8080  (Pod2)
-         └─ 10.0.0.3:8080  (Pod3)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    S["Service: my-service"] --> E["Endpoints"]
+    E --> A["10.0.0.1:8080 — Pod1"]
+    E --> B["10.0.0.2:8080 — Pod2"]
+    E --> C["10.0.0.3:8080 — Pod3"]
 ```
 
 ### AWS + k8s 연동 시 전체 흐름
 
 AWS EKS 환경에서 둘이 연결될 때의 구조는 다음과 같습니다.
 
-```
-클라이언트
-   │
-   ▼
-[ALB]
-   │  (ALB 내부에서 Listener Rule → Target Group 참조)
-   │
-   ▼
-[Target Group]  ←── "어디로 보낼지 명세"만 하는 설정
-   │
-   ▼
-[k8s Node : NodePort]  or  [Pod IP 직접]
-   │
-   ▼
-[k8s 내부 라우팅 (kube-proxy / Service)]
-   │
-   ▼
-[Pod]
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["클라이언트"] --> A["ALB: Listener Rule"] --> T["Target Group<br/>어디로 보낼지 명세하는 설정"]
+    T --> N["k8s Node: NodePort"]
+    T --> D["Pod IP 직접"]
+    N --> R["k8s 내부 라우팅<br/>kube-proxy / Service"] --> P["Pod"]
+    D --> P
 ```
 
 Target Group은 독립 장비가 아니라 ALB에 붙어있는 설정이며, AWS Load Balancer Controller를 사용하면 k8s의 Ingress/Service 리소스를 감시해서 AWS Target Group을 자동으로 생성/갱신합니다.

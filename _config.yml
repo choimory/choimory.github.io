@@ -4,6 +4,8 @@ lang: ko-KR
 timezone: Asia/Seoul
 
 title: choimory
+# 브라우저 탭 제목은 좌측 프로필 이름과 별도로 지정한다.
+browser_title: choimory-blog
 tagline: Back-end, Dev-ops Engineer
 description: >-
   choimory's dev-log

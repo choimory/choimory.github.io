@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Service mesh - Istio (4)"
 date: 2025-09-30T00:00:04
 toc: true
@@ -494,38 +495,28 @@ Istio는 각 Pod에 사이드카를 추가하지만, 개발자가 YAML에 명시
 
 ### 실제 배치 예시
 
-```
-Before Istio:
-┌─────────────────┐
-│   Node 1        │
-│  ┌──────────┐   │
-│  │ Pod A    │   │
-│  │ my-app   │   │
-│  └──────────┘   │
-│  ┌──────────┐   │
-│  │ Pod B    │   │
-│  │ my-app   │   │
-│  └──────────┘   │
-└─────────────────┘
-
-After Istio:
-┌─────────────────────────────────┐
-│   Node 1                        │
-│  ┌─────────────────────────┐   │
-│  │ Pod A                   │   │
-│  │ ┌────────┐ ┌─────────┐ │   │
-│  │ │my-app  │ │istio-   │ │   │
-│  │ │        │ │proxy    │ │   │
-│  │ └────────┘ └─────────┘ │   │
-│  └─────────────────────────┘   │
-│  ┌─────────────────────────┐   │
-│  │ Pod B                   │   │
-│  │ ┌────────┐ ┌─────────┐ │   │
-│  │ │my-app  │ │istio-   │ │   │
-│  │ │        │ │proxy    │ │   │
-│  │ └────────┘ └─────────┘ │   │
-│  └─────────────────────────┘   │
-└─────────────────────────────────┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph Before["Before Istio: Node 1"]
+        A["Pod A: my-app"]
+        B["Pod B: my-app"]
+    end
+    subgraph After["After Istio: Node 1"]
+        subgraph PA["Pod A"]
+            AA["my-app"]
+            EA["istio-proxy"]
+        end
+        subgraph PB["Pod B"]
+            AB["my-app"]
+            EB["istio-proxy"]
+        end
+    end
 ```
 
 ### 규모에 따른 리소스 증가
@@ -550,15 +541,20 @@ After Istio:
 
 모든 네트워크 트래픽이 사이드카를 거친다.
 
-```
-Before Istio:
-Service A → Service B
-(직접 연결)
-
-After Istio:
-Service A → [Envoy A] → [Envoy B] → Service B
-            ↑                    ↑
-         사이드카            사이드카
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph Before["Before Istio: 직접 연결"]
+        A["Service A"] --> B["Service B"]
+    end
+    subgraph After["After Istio"]
+        C["Service A"] --> EA["Envoy A<br/>사이드카"] --> EB["Envoy B<br/>사이드카"] --> D["Service B"]
+    end
 ```
 
 ### 구체적으로 하는 일
@@ -584,12 +580,17 @@ spec:
       weight: 10  # 신버전 10%
 ```
 
-```
-100개 요청 중:
-→ 90개는 v1으로
-→ 10개는 v2로
-→ 사이드카가 자동으로 분배
-→ 애플리케이션 코드는 모름
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["100개 요청"] --> B["사이드카가 자동 분배<br/>애플리케이션 코드는 모름"]
+    B -->|"90개"| C["v1"]
+    B -->|"10개"| D["v2"]
 ```
 
 ### 재시도 및 타임아웃
@@ -637,15 +638,16 @@ spec:
       maxEjectionPercent: 50
 ```
 
-```
-장애 발생 시:
-Service A → [Envoy] → Service B (응답 없음)
-                ↓
-          5번 연속 실패 감지
-                ↓
-          Service B 격리
-                ↓
-          다른 인스턴스로 라우팅
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Service A"] --> E["Envoy"] --> B["Service B: 응답 없음"]
+    B --> F["5번 연속 실패 감지"] --> G["Service B 격리"] --> H["다른 인스턴스로 라우팅"]
 ```
 
 ---
@@ -656,34 +658,37 @@ Istio의 사이드카(Envoy)는 **각 서비스마다 붙는 전용 리버스 �
 
 ### 전통적인 Nginx 패턴
 
-```
-                  ┌─────────┐
-외부 요청  ───→  │ Nginx   │  ───→  Backend Servers
-                  │(리버스  │         - Server 1
-                  │ 프록시) │         - Server 2
-                  └─────────┘         - Server 3
-                  
-하나의 Nginx가 여러 백엔드로 트래픽 분배
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["외부 요청"] --> N["Nginx<br/>중앙 리버스 프록시"]
+    N --> B["Backend Server 1"]
+    N --> C["Backend Server 2"]
+    N --> D["Backend Server 3"]
 ```
 
 ### Istio 패턴 (분산 리버스 프록시)
 
-```
-┌──────────────────────┐      ┌──────────────────────┐
-│   Service A Pod      │      │   Service B Pod      │
-│  ┌────────┐          │      │  ┌────────┐          │
-│  │Service │          │      │  │Service │          │
-│  │  A     │          │      │  │  B     │          │
-│  └───┬────┘          │      │  └───▲────┘          │
-│      │               │      │      │               │
-│  ┌───▼────────┐      │      │  ┌───┴────────┐     │
-│  │  Envoy     │ ─────┼──────┼─→│  Envoy     │     │
-│  │(리버스     │      │      │  │(리버스     │     │
-│  │ 프록시)    │      │      │  │ 프록시)    │     │
-│  └────────────┘      │      │  └────────────┘     │
-└──────────────────────┘      └──────────────────────┘
-
-각 서비스마다 전용 Envoy(Nginx 같은) 프록시가 붙음
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph PA["Service A Pod"]
+        A["Service A"] --> EA["Envoy A<br/>전용 리버스 프록시"]
+    end
+    subgraph PB["Service B Pod"]
+        EB["Envoy B<br/>전용 리버스 프록시"] --> B["Service B"]
+    end
+    EA --> EB
 ```
 
 ## Envoy vs Nginx: 핵심 차이

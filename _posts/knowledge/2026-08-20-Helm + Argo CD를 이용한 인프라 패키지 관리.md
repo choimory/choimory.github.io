@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Helm + Argo CD를 이용한 인프라 패키지 관리"
 date: 2026-08-20T00:00:00
 toc: true
@@ -15,12 +16,18 @@ Kubernetes 인프라 패키지를 Helm과 Argo CD로 어떻게 관리하는 것�
 
 다음과 같은 구조로 구성하는 방식이 꽤 일반적이고 관리하기 좋은 방식입니다.
 
-```
-Helm
-  ↓
-Argo CD
-  ↓
-Istio / Ingress Controller / Metrics Server / ...
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Helm"]
+    N1["Argo CD"]
+    N2["Istio / Ingress Controller / Metrics Server / ..."]
+    N0 --> N1 --> N2
 ```
 
 핵심은 "Helm은 최초 Argo CD 설치를 위한 Bootstrap 도구로 사용하고, Argo CD가 올라온 이후부터는 대부분의 Kubernetes 인프라 패키지를 GitOps 방식으로 관리한다"는 것입니다.
@@ -40,60 +47,59 @@ Git = 실제 원하는 상태(Desired State)를 저장하는 기준점
 
 가장 이해하기 쉽게 표현하면 다음과 같습니다.
 
-```
-관리자
-  │
-  │ helm install
-  ▼
-Argo CD
-  │
-  │ Git Repository 감시
-  ▼
-GitOps Repository
-  │
-  ├── Argo CD Application: istio-base
-  │       │
-  │       └── Istio Helm Chart
-  │
-  ├── Argo CD Application: istiod
-  │       │
-  │       └── Istio Helm Chart
-  │
-  ├── Argo CD Application: ingress-nginx
-  │       │
-  │       └── ingress-nginx Helm Chart
-  │
-  ├── Argo CD Application: metrics-server
-  │       │
-  │       └── metrics-server Helm Chart
-  │
-  └── Argo CD Application: cert-manager
-          │
-          └── cert-manager Helm Chart
-
-                ↓
-
-          Kubernetes Cluster
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["관리자"] -->|"helm install"| C["Argo CD"] -->|"Git Repository 감시"| G["GitOps Repository"]
+    G --> B["Application: istio-base"] --> I["Istio Helm Chart"]
+    G --> D["Application: istiod"] --> J["Istio Helm Chart"]
+    G --> N["Application: ingress-nginx"] --> O["ingress-nginx Helm Chart"]
+    G --> M["Application: metrics-server"] --> Q["metrics-server Helm Chart"]
+    G --> E["Application: cert-manager"] --> F["cert-manager Helm Chart"]
+    I --> K["Kubernetes Cluster"]
+    J --> K
+    O --> K
+    Q --> K
+    F --> K
 ```
 
 따라서 정확히는 단순히
 
-```
-Helm → Argo CD → 기타
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Helm"]
+    N1["Argo CD"]
+    N2["기타"]
+    N0 --> N1 --> N2
 ```
 
 라기보다는
 
-```
-Helm
-  ↓
-Argo CD
-  ↓
-GitOps Repository
-  ↓
-Helm Chart / Kustomize / YAML
-  ↓
-Kubernetes
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Helm"]
+    N1["Argo CD"]
+    N2["GitOps Repository"]
+    N3["Helm Chart / Kustomize / YAML"]
+    N4["Kubernetes"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 라고 보는 것이 가장 정확합니다.
@@ -123,21 +129,24 @@ helm upgrade --install argocd argo/argo-cd \
 
 그러면 Kubernetes에 Argo CD가 설치됩니다.
 
-```
-Kubernetes
-   ↑
-Helm CLI
-   │
-관리자
-
-↓
-
-Kubernetes
-└── argocd
-    ├── argocd-server
-    ├── argocd-repo-server
-    ├── argocd-application-controller
-    └── ...
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["관리자"] --> H["Helm CLI"] --> K["Kubernetes"]
+    subgraph C["Kubernetes: 설치 결과"]
+        subgraph R["argocd"]
+            S["argocd-server"]
+            P["argocd-repo-server"]
+            O["argocd-application-controller"]
+            E["..."]
+        end
+    end
+    K -.-> S
 ```
 
 이후부터는 Helm CLI로 이것저것 직접 설치하는 작업을 최소화하는 것입니다.
@@ -184,19 +193,15 @@ spec:
 
 Argo CD가 이것을 읽으면
 
-```
-Git
- │
- │ Application
- ▼
-Argo CD
- │
- │ Helm Chart 읽기
- ▼
-Istio Kubernetes Manifest 생성
- │
- ▼
-Kubernetes 적용
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    G["Git"] -->|"Application"| A["Argo CD"] -->|"Helm Chart 읽기"| M["Istio Kubernetes Manifest 생성"] --> K["Kubernetes 적용"]
 ```
 
 이렇게 동작합니다.
@@ -207,28 +212,36 @@ Kubernetes 적용
 
 오히려
 
-```
-기존
-
-사람
- ↓
-helm install
- ↓
-Helm Chart
- ↓
-Kubernetes
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["기존: 사람"]
+    N1["helm install"]
+    N2["Helm Chart"]
+    N3["Kubernetes"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 에서
 
-```
-Git
- ↓
-Argo CD
- ↓
-Helm Chart
- ↓
-Kubernetes
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Git"]
+    N1["Argo CD"]
+    N2["Helm Chart"]
+    N3["Kubernetes"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 로 Helm을 실행하고 관리하는 주체가 변경되었다고 이해하면 됩니다.
@@ -345,17 +358,20 @@ gitops/
 
 예를 들어 Argo CD에 직접 Istio, Metrics Server 등을 하나씩 등록하는 것이 아니라 최상위 Application 하나만 등록합니다.
 
-```
-Argo CD
- │
- ▼
-infra Application
- │
- ├── istio-base Application
- ├── istiod Application
- ├── ingress Application
- ├── metrics-server Application
- └── cert-manager Application
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Argo CD"] --> I["infra Application"]
+    I --> B["istio-base Application"]
+    I --> D["istiod Application"]
+    I --> N["ingress Application"]
+    I --> M["metrics-server Application"]
+    I --> C["cert-manager Application"]
 ```
 
 그러면 최초 구축 시 사람이 하는 작업이 거의 다음 두 단계까지 줄어듭니다.
@@ -368,12 +384,18 @@ infra Application
 
 이후에는
 
-```
-Git 수정
-   ↓
-Argo CD
-   ↓
-전체 인프라 자동 구성
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Git 수정"]
+    N1["Argo CD"]
+    N2["전체 인프라 자동 구성"]
+    N0 --> N1 --> N2
 ```
 
 이 됩니다.
@@ -390,27 +412,18 @@ Argo CD가 동작하기 전에 반드시 존재해야 하는 것들은 별도의
 
 예를 들어
 
-```
-Cloud
-├── VPC
-├── Subnet
-├── Load Balancer
-├── Kubernetes Cluster
-└── Node
-
-        ↓
-
-Bootstrap
-└── Argo CD
-
-        ↓
-
-GitOps
-├── Istio
-├── Ingress
-├── Monitoring
-├── Logging
-└── Application
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Cloud<br/>VPC / Subnet / Load Balancer<br/>Kubernetes Cluster / Node"]
+    N1["Bootstrap<br/>Argo CD"]
+    N2["GitOps<br/>Istio / Ingress / Monitoring<br/>Logging / Application"]
+    N0 --> N1 --> N2
 ```
 
 같은 식입니다.
@@ -419,22 +432,23 @@ VPC나 Kubernetes Cluster 생성까지 관리하고 싶다면 Terraform/OpenTofu
 
 그러면 전체 구조가 상당히 깔끔해집니다.
 
-```
-Terraform / OpenTofu
-        ↓
-Cloud Infrastructure
-        ↓
-Kubernetes Cluster
-        ↓
-Helm
-        ↓
-Argo CD
-        ↓
-GitOps
-        ↓
-Helm Chart / Kustomize / YAML
-        ↓
-Istio / Monitoring / Applications
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Terraform / OpenTofu"]
+    N1["Cloud Infrastructure"]
+    N2["Kubernetes Cluster"]
+    N3["Helm"]
+    N4["Argo CD"]
+    N5["GitOps"]
+    N6["Helm Chart / Kustomize / YAML"]
+    N7["Istio / Monitoring / Applications"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5 --> N6 --> N7
 ```
 
 ---
@@ -443,40 +457,38 @@ Istio / Monitoring / Applications
 
 결론적으로
 
-```
-Helm → Argo CD → 기타 인프라 패키지
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Helm"]
+    N1["Argo CD"]
+    N2["기타 인프라 패키지"]
+    N0 --> N1 --> N2
 ```
 
 구성은 좋은 방향입니다.
 
 조금 더 정확하게 정리하면 다음과 같습니다.
 
-```
-[Bootstrap]
-
-Kubernetes
-    ↓
-Helm으로 Argo CD 설치
-
-[GitOps 시작]
-
-Git Repository
-    ↓
-Argo CD
-    ↓
-├── Helm Chart
-├── Kustomize
-└── YAML
-    ↓
-Kubernetes
-    ↓
-├── Istio
-├── Ingress Controller
-├── cert-manager
-├── Metrics Server
-├── Prometheus
-├── Grafana
-└── Application
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph B["Bootstrap"]
+        K["Kubernetes"] --> H["Helm으로 Argo CD 설치"]
+    end
+    subgraph G["GitOps 시작"]
+        R["Git Repository"] --> A["Argo CD"] --> S["Helm Chart / Kustomize / YAML"] --> C["Kubernetes"] --> D["Istio / Ingress Controller / cert-manager<br/>Metrics Server / Prometheus / Grafana / Application"]
+    end
 ```
 
 핵심 원칙은 "Helm은 패키징/렌더링 수단이고, Argo CD는 그 패키지의 배포와 지속적인 상태를 관리하는 GitOps 컨트롤러"라는 것입니다.

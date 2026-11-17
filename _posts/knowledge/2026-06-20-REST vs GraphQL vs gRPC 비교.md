@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "REST vs GraphQL vs gRPC 비교"
 date: 2026-06-20T00:00:00
 toc: true
@@ -136,14 +137,18 @@ override suspend fun getPost(request: GetPostRequest): PostProto {
 
 ### 현실적인 조합 패턴
 
-```
-클라이언트 (React/모바일)
-    ↓ GraphQL (클라이언트 친화적)
-BFF / API Gateway
-    ↓ gRPC (고성능 내부 통신)
-Order Service ─ gRPC ─ Payment Service
-    ↓ REST (외부 파트너사 연동)
-외부 결제 PG API
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["클라이언트: React / 모바일"] -->|"GraphQL: 클라이언트 친화적"| B["BFF / API Gateway"]
+    B -->|"gRPC: 고성능 내부 통신"| O["Order Service"]
+    O ---|"gRPC"| P["Payment Service"]
+    O -->|"REST: 외부 파트너사 연동"| E["외부 결제 PG API"]
 ```
 
 ---

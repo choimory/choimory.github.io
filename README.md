@@ -7,8 +7,11 @@
 - [기술 스택](#기술-스택)
 - [콘텐츠 아키텍처](#콘텐츠-아키텍처)
 - [메뉴와 화면 구성](#메뉴와-화면-구성)
+  - [브라우저 제목과 프로필 이름](#브라우저-제목과-프로필-이름)
+  - [파비콘과 설치용 아이콘](#파비콘과-설치용-아이콘)
 - [프로젝트 구조](#프로젝트-구조)
 - [글 작성](#글-작성)
+  - [Mermaid 다이어그램](#mermaid-다이어그램)
 - [로컬 실행](#로컬-실행)
 - [빌드와 검증](#빌드와-검증)
 - [배포](#배포)
@@ -71,6 +74,39 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 
 사이트 언어는 `ko-KR`이며 `_data/locales/ko-KR.yml`에서 사이드바 탭 이름만 영어로 덮어씁니다. 사이트명, 소개, 프로필 이미지와 기타 전역 설정은 `_config.yml`에서 관리합니다.
 
+### 브라우저 제목과 프로필 이름
+
+`_config.yml`에서 좌측 프로필 이름과 브라우저 탭 제목을 별도로 지정합니다.
+
+```yaml
+title: choimory
+browser_title: choimory-blog
+```
+
+| 설정 | 표시 위치 |
+| --- | --- |
+| `title` | 좌측 프로필 이름, SEO 사이트명, PWA 이름 |
+| `browser_title` | 홈의 탭 제목 및 다른 페이지의 탭 제목 접미사 |
+
+홈의 탭 제목은 `choimory-blog`, 글 상세는 `글 제목 | choimory-blog`로 표시합니다. `_includes/head.html`이 이 구분을 처리하며, `browser_title`이 없으면 `title`을 사용합니다. 테마의 head 템플릿을 덮어쓰므로 Chirpy 업데이트 시 해당 템플릿의 변경 사항도 비교합니다.
+
+### 파비콘과 설치용 아이콘
+
+아이콘은 `assets/img/favicons/`에서 관리하고, `_includes/favicons.html`이 브라우저와 홈 화면용 링크를 출력합니다. 브라우저용 PNG·ICO는 원형이며 바깥 영역은 투명합니다. 사진 기반 아이콘이므로 테마 기본 SVG는 연결하지 않습니다.
+
+| 파일 | 용도 및 규격 |
+| --- | --- |
+| `favicon.ico` | 브라우저용 16·32·48px 프레임 |
+| `favicon-96x96.png` | 브라우저용 96×96 PNG |
+| `apple-touch-icon.png` | 홈 화면용 180×180 PNG |
+| `web-app-manifest-192x192.png` | PWA용 192×192, `purpose: any` |
+| `web-app-manifest-512x512.png` | PWA용 512×512, `purpose: maskable` |
+| `site.webmanifest` | PWA 이름, 시작 URL, 아이콘과 표시 설정 |
+
+PWA가 활성화되면 manifest를 연결합니다. 홈 화면·설치용 이미지는 정사각형으로 준비하며 실제 모양은 운영체제의 마스크 규칙에 따라 달라질 수 있습니다. 512px 마스크용 아이콘은 얼굴이 잘리지 않도록 여백을 포함합니다.
+
+아이콘 URL에는 캐시 갱신용 버전 쿼리가 붙습니다. 아이콘을 교체할 때는 `_includes/favicons.html`과 `assets/img/favicons/site.webmanifest`의 `favicon_version`을 함께 갱신합니다. 현재 값은 `20261118-2`입니다. 변경 후에는 파일 규격, manifest 해석, 브라우저의 이미지 로딩과 투명도를 확인합니다.
+
 ## 프로젝트 구조
 
 ```text
@@ -82,6 +118,9 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 │   ├── contact.yml                # 사이드바 연락처 링크
 │   ├── locales/ko-KR.yml          # 한국어 UI의 탭 이름 재정의
 │   └── share.yml                  # 글 공유 서비스
+├── _includes/
+│   ├── head.html                  # 탭 제목과 프로필 이름 분리
+│   └── favicons.html              # 파비콘과 manifest 연결
 ├── _layouts/section.html          # Experiences/Knowledge 연도별 목록
 ├── _plugins/posts-lastmod-hook.rb # Git 이력 기반 최종 수정일 계산
 ├── _posts/
@@ -89,6 +128,7 @@ Experiences와 Knowledge는 `_layouts/section.html`을 사용해 해당 `section
 │   └── knowledge/                 # 개념과 기술 지식
 ├── _tabs/                         # 사이드바 탭 페이지와 표시 순서
 ├── assets/images/                 # 프로필 및 글 첨부 이미지
+├── assets/img/favicons/            # 브라우저·홈 화면·PWA 아이콘과 manifest
 ├── Dockerfile                     # Ruby 3.3 기반 로컬 실행 이미지
 ├── Gemfile                        # Ruby gem 의존성
 ├── Gemfile.lock                   # 해석된 의존성 버전
@@ -141,6 +181,32 @@ tags:
 - `toc`는 글의 목차 표시 여부를 제어합니다.
 - 글 이미지는 `assets/images` 아래에 저장하고 본문에서는 `/assets/images/...` 절대 경로로 참조합니다.
 
+### Mermaid 다이어그램
+
+Mermaid를 렌더링하는 글은 게시글의 front matter에 `mermaid: true`를 추가합니다. Chirpy가 해당 글에서 Mermaid 스크립트를 로드합니다. `post.sh`의 기본 템플릿에는 이 값이 없으므로 필요한 글에 직접 추가합니다.
+
+시스템 구조·흐름·분기는 `flowchart`, 시간 순서가 중요한 요청·응답은 `sequenceDiagram`으로 작성합니다. 본문에는 다음과 같이 `mermaid` 언어를 지정한 코드 블록을 사용합니다.
+
+````markdown
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["클라이언트"] --> B["API"] --> C["DB"]
+```
+````
+
+코드 블록 안의 `config`는 해당 도식의 설정이며, 게시글 자체의 front matter와 구분합니다.
+
+- `theme: dark`는 현재 사이트의 고정 다크 배경에서 도식의 대비를 확보합니다. 사이트 테마와 자동으로 연동되지 않으므로 라이트 모드 도입이나 테마 정책 변경 시 함께 검토해야 합니다.
+- `flowchart.useMaxWidth: false`는 넓은 도식이 지나치게 축소되지 않도록 합니다. 도식 영역 안에서 가로 스크롤하여 전체 내용을 확인할 수 있습니다.
+- Sequence Diagram에는 `flowchart` 대신 `sequence` 아래에 `useMaxWidth: false`를 지정합니다.
+- 디렉터리 구조, 명령어 출력과 실제 코드 예시는 표현 목적에 맞는 일반 코드 블록으로 작성합니다.
+
 ## 로컬 실행
 
 Docker daemon이 실행 중인 상태에서 다음 명령을 사용합니다. 이미지 빌드, port 연결과 소스 volume 설정은 `local.sh`가 처리합니다.
@@ -172,6 +238,8 @@ production 사이트를 생성합니다.
 ```
 
 `test`는 production 빌드를 먼저 실행한 후 `html-proofer`를 수행합니다.
+
+Mermaid는 브라우저에서 렌더링되므로 위 검증만으로 도식 문법이나 실제 표시가 보장되지는 않습니다. 도식을 변경하면 Mermaid 문법 검사와 함께 로컬 서버에서 데스크톱·모바일 표시, 색상 대비와 도식 영역의 가로 스크롤도 확인합니다.
 
 로컬 이미지와 Jekyll 생성물을 정리합니다.
 

@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Tailscale"
 date: 2026-08-28T00:00:00
 toc: true
@@ -16,18 +17,19 @@ Tailscale은 "인터넷에 흩어진 서버와 PC를 하나의 사설 네트워�
 
 쉽게 표현하면 다음과 같습니다.
 
-```
-회사 PC
-   │
-   │ Tailscale
-   │
-   ├────────── 개발 서버
-   │
-   ├────────── Bastion
-   │
-   ├────────── Kubernetes
-   │
-   └────────── 홈서버
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["회사 PC"] -->|"Tailscale"| T["Tailnet 연결"]
+    T --> D["개발 서버"]
+    T --> B["Bastion"]
+    T --> K["Kubernetes"]
+    T --> H["홈서버"]
 ```
 
 각 장비가 AWS, NCP, 집, 회사처럼 서로 다른 네트워크에 있어도 마치 같은 내부망에 있는 것처럼 접근할 수 있습니다.
@@ -38,24 +40,34 @@ Tailscale은 "인터넷에 흩어진 서버와 PC를 하나의 사설 네트워�
 
 전통적인 VPN은 보통 다음 구조입니다.
 
-```
-노트북
- ↓
-VPN Server
- ↓
-사설망
- ↓
-Server
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["노트북"]
+    N1["VPN Server"]
+    N2["사설망"]
+    N3["Server"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 모든 트래픽이 VPN 서버를 거치는 경우가 많습니다.
 
 Tailscale은 기본적으로 다음과 같습니다.
 
-```
-노트북 ←────────→ Server
-        WireGuard
-          P2P
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["노트북"] <-->|"WireGuard: P2P"| S["Server"]
 ```
 
 가능하면 NAT Traversal을 이용하여 두 장비가 직접 연결됩니다.
@@ -64,19 +76,20 @@ Tailscale은 기본적으로 다음과 같습니다.
 
 즉,
 
-```
-Traditional VPN
-
-Client
-   ↓
-VPN Gateway
-   ↓
-Server
-
-Tailscale
-
-Client ←──────→ Server
-      Direct P2P
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph V["Traditional VPN"]
+        C["Client"] --> G["VPN Gateway"] --> S["Server"]
+    end
+    subgraph T["Tailscale"]
+        A["Client"] <-->|"Direct P2P"| B["Server"]
+    end
 ```
 
 라는 차이가 큽니다.
@@ -165,14 +178,17 @@ NAT Traversal 정보
 
 중요한 것은 실제 데이터가 일반적으로 Tailscale의 Control Plane을 거쳐가는 것은 아니라는 점입니다.
 
-```
-  Tailscale Control Plane
-   ↑                 ↑
-연결정보           연결정보
-   │                 │
-   │                 │
-Client ←──────────→ Server
-       실제 데이터
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Client"] -->|"연결정보"| P["Tailscale Control Plane"]
+    S["Server"] -->|"연결정보"| P
+    C <-->|"실제 데이터"| S
 ```
 
 실제 트래픽은 가능한 경우 두 장비가 직접 통신합니다.
@@ -185,14 +201,21 @@ Client ←──────────→ Server
 
 Tailscale로 묶인 하나의 논리적인 사설 네트워크입니다.
 
-```
-Tailnet
-├── Laptop
-├── Bastion
-├── Jenkins
-├── Kubernetes
-├── NAS
-└── Home Server
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Tailnet"]
+    R --> N0["Laptop"]
+    R --> N1["Bastion"]
+    R --> N2["Jenkins"]
+    R --> N3["Kubernetes"]
+    R --> N4["NAS"]
+    R --> N5["Home Server"]
 ```
 
 인터넷에 실제로는 서로 떨어져 있어도 논리적으로 하나의 네트워크처럼 사용할 수 있습니다. (tailscale.com)
@@ -221,21 +244,17 @@ ssh user@dev-bastion
 
 예를 들어 개념적으로
 
-```
-developer
-    ↓
-dev-server:22
-허용
-
-developer
-    ↓
-prod-db:3306
-차단
-
-admin
-    ↓
-prod-db:3306
-허용
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["developer"] -->|"허용"| S["dev-server:22"]
+    D -.->|"차단"| P["prod-db:3306"]
+    A["admin"] -->|"허용"| P
 ```
 
 같은 Zero Trust 방식의 접근 제어가 가능합니다.
@@ -252,28 +271,35 @@ Tailscale의 매우 중요한 기능입니다.
 
 예를 들어 VPC가
 
-```
-10.10.0.0/16
-
-├── Bastion
-├── Kubernetes
-├── MySQL
-└── Redis
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["10.10.0.0/16"]
+    R --> N0["Bastion"]
+    R --> N1["Kubernetes"]
+    R --> N2["MySQL"]
+    R --> N3["Redis"]
 ```
 
 라고 한다면 Bastion만 Tailscale Subnet Router로 만들 수 있습니다.
 
-```
-MacBook
-   │
-Tailscale
-   │
-Bastion
-Subnet Router
-   │
-   ├── 10.10.1.10 Kubernetes
-   ├── 10.10.2.10 MySQL
-   └── 10.10.2.20 Redis
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["MacBook"] --> T["Tailscale"] --> B["Bastion: Subnet Router"]
+    B --> K["10.10.1.10: Kubernetes"]
+    B --> D["10.10.2.10: MySQL"]
+    B --> R["10.10.2.20: Redis"]
 ```
 
 그러면 MySQL이나 Redis에 Tailscale을 직접 설치하지 않아도 접근할 수 있습니다. Subnet Router는 특정 private subnet으로 가는 경로를 Tailnet에 제공하는 역할입니다. (tailscale.com)
@@ -288,26 +314,37 @@ Subnet Router와 약간 다릅니다.
 
 Subnet Router:
 
-```
-내 PC
- ↓
-Tailscale
- ↓
-10.10.0.0/16
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["내 PC"]
+    N1["Tailscale"]
+    N2["10.10.0.0/16"]
+    N0 --> N1 --> N2
 ```
 
 특정 사설망으로 가는 트래픽만 전달합니다.
 
 Exit Node:
 
-```
-내 PC
- ↓
-Tailscale
- ↓
-Exit Node
- ↓
-Internet
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["내 PC"]
+    N1["Tailscale"]
+    N2["Exit Node"]
+    N3["Internet"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 인터넷 트래픽 자체를 특정 Tailscale 장비를 통해 내보냅니다. 즉 전통적인 VPN Gateway와 비슷하게 사용할 수 있습니다. (tailscale.com)
@@ -320,23 +357,32 @@ Tailscale은 Kubernetes Operator도 공식적으로 제공합니다.
 
 예를 들어 Kubernetes API Server를 인터넷에 공개하지 않고
 
-```
-개발자 PC
-    │
- Tailscale
-    │
-    ↓
-Kubernetes API Server
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["개발자 PC"] -->|"Tailscale"| K["Kubernetes API Server"]
 ```
 
 형태로 접근할 수 있습니다.
 
 또한
 
-```
-Tailnet → Kubernetes Service
-Kubernetes Pod → Tailnet
-Tailnet → kube-apiserver
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    T["Tailnet"] --> S["Kubernetes Service"]
+    P["Kubernetes Pod"] --> T
+    T --> A["kube-apiserver"]
 ```
 
 모두 지원합니다. (tailscale.com)
@@ -345,19 +391,21 @@ Operator는 Helm으로도 설치할 수 있습니다. (tailscale.com)
 
 그래서 Kubernetes 인프라에서는 다음과 같은 구조도 가능합니다.
 
-```
-Developer Laptop
-       │
-       │ Tailscale
-       ↓
-┌─────────────────────────┐
-│ Private Kubernetes      │
-│                         │
-│ kube-apiserver          │
-│ ArgoCD                  │
-│ Grafana                 │
-│ Prometheus              │
-└─────────────────────────┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["Developer Laptop"] -->|"Tailscale"| K
+    subgraph K["Private Kubernetes"]
+        A["kube-apiserver"]
+        C["ArgoCD"]
+        G["Grafana"]
+        P["Prometheus"]
+    end
 ```
 
 이렇게 하면 관리용 서비스를 굳이 Public IP로 노출하지 않아도 됩니다.
@@ -370,28 +418,33 @@ Developer Laptop
 
 기존 방식은
 
-```
-회사 PC
-  ↓ SSH
-Public Bastion
-  ↓
-Private Server
-  ↓
-DB / Kubernetes
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["회사 PC"] -->|"SSH"| B["Public Bastion"] --> S["Private Server"] --> D["DB / Kubernetes"]
 ```
 
 입니다.
 
 Tailscale을 도입하면
 
-```
-회사 PC
-   │
-Tailscale
-   │
-   ├── Bastion
-   ├── Kubernetes
-   └── Private Server
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["회사 PC"] --> T["Tailscale"]
+    T --> B["Bastion"]
+    T --> K["Kubernetes"]
+    T --> S["Private Server"]
 ```
 
 처럼 구성할 수 있습니다.
@@ -406,16 +459,16 @@ Tailscale
 
 로 열어 놓는 대신
 
-```
-Internet
-   X
-Server:22
-
-Laptop
-  │
-Tailscale
-  ↓
-Server:22
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] -.->|"차단"| S["Server:22"]
+    L["Laptop"] -->|"Tailscale"| S
 ```
 
 방식으로 관리할 수 있습니다.
@@ -465,18 +518,20 @@ Tailscale은 한마디로
 
 핵심 구조는 다음과 같습니다.
 
-```
-             Tailnet
-               │
-   ┌───────────┼───────────┐
-   │           │           │
-Laptop      Bastion      Server
-   │                       │
-   │                    Subnet Router
-   │                       │
-   │                 ┌─────┴─────┐
-   │                 │           │
-   └───────────── Kubernetes    DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    T["Tailnet"] --- L["Laptop"]
+    T --- B["Bastion"]
+    T --- S["Server"] --> R["Subnet Router"]
+    R --> K["Kubernetes"]
+    R --> D["DB"]
+    L --> K
 ```
 
 특히 DevOps에서는 "Public IP + Bastion + IP Whitelist + VPN"으로 관리하던 부분을 상당히 단순화할 수 있다는 점이 핵심입니다.

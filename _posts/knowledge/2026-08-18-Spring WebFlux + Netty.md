@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Spring WebFlux + Netty"
 date: 2026-08-18T00:00:00
 toc: true
@@ -21,16 +22,20 @@ tags:
 
 즉, 전체 흐름은 대략 다음과 같습니다.
 
-```
-클라이언트
-  ↓
-Netty
-  ↓
-Spring WebFlux
-  ↓
-Reactor Mono / Flux
-  ↓
-서비스 및 외부 시스템
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["클라이언트"]
+    N1["Netty"]
+    N2["Spring WebFlux"]
+    N3["Reactor Mono / Flux"]
+    N4["서비스 및 외부 시스템"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 ---
@@ -43,10 +48,17 @@ Spring WebFlux는 Spring MVC와 비슷한 역할을 하지만 내부 처리 방�
 
 Spring MVC는 일반적으로 요청 하나를 스레드 하나가 처리하는 구조입니다.
 
-```
-요청 1 → 스레드 1
-요청 2 → 스레드 2
-요청 3 → 스레드 3
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["요청 1"] --> X["스레드 1"]
+    B["요청 2"] --> Y["스레드 2"]
+    C["요청 3"] --> Z["스레드 3"]
 ```
 
 데이터베이스나 외부 API 응답을 기다리는 동안에도 해당 스레드는 대기 상태가 됩니다.
@@ -55,10 +67,17 @@ Spring MVC는 일반적으로 요청 하나를 스레드 하나가 처리하는 
 
 Spring WebFlux는 소수의 이벤트 루프 스레드가 많은 요청을 처리합니다.
 
-```
-요청 1 ─┐
-요청 2 ─┼→ Event Loop
-요청 3 ─┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["요청 1"] --> E["Event Loop"]
+    B["요청 2"] --> E
+    C["요청 3"] --> E
 ```
 
 외부 API나 데이터베이스 응답을 기다리는 동안 스레드를 점유하지 않고 다른 요청을 처리할 수 있습니다.
@@ -79,14 +98,19 @@ implementation("org.springframework.boot:spring-boot-starter-webflux")
 
 위 의존성을 추가하면 기본적으로 다음 구조가 사용됩니다.
 
-```
-Spring WebFlux
-  ↓
-Reactor Netty
-  ↓
-Java NIO
-  ↓
-운영체제 네트워크
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Spring WebFlux"]
+    N1["Reactor Netty"]
+    N2["Java NIO"]
+    N3["운영체제 네트워크"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 Spring MVC의 기본 서버가 Tomcat인 것과 비교할 수 있습니다.
@@ -415,12 +439,18 @@ fun getDashboard(): Mono<DashboardResponse> {
 
 특히 다음 구조라면 WebFlux 사용 효과가 크지 않습니다.
 
-```
-WebFlux
-  ↓
-JPA
-  ↓
-MySQL JDBC
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["WebFlux"]
+    N1["JPA"]
+    N2["MySQL JDBC"]
+    N0 --> N1 --> N2
 ```
 
 요청 진입부만 비동기이고 데이터베이스에서는 블로킹되기 때문입니다.

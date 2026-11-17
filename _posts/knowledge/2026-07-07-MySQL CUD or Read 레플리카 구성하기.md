@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "MySQL CUD or Read 레플리카 구성하기"
 date: 2026-07-07T00:00:00
 toc: true
@@ -23,12 +24,16 @@ MySQL에서 CUD와 Read를 분리한다는 것은 "쓰기 작업"과 "읽기 작
 
 일반적인 구성은 다음과 같습니다.
 
-```
-Application
-   |
-   |-- INSERT / UPDATE / DELETE --> Writer DB, Primary, Master
-   |
-   |-- SELECT -------------------> Reader DB, Replica, Read Replica
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application"] -->|"INSERT / UPDATE / DELETE"| W["Writer DB / Primary / Master"]
+    A -->|"SELECT"| R["Reader DB / Replica / Read Replica"]
 ```
 
 핵심은 "쓰기 DB는 하나로 유지하고", "읽기 DB를 여러 개로 늘려 조회 부하를 분산"하는 것입니다.
@@ -39,27 +44,18 @@ Application
 
 MySQL CUD/Read 분리 구조는 보통 "Primary-Replica Replication" 기반으로 구성합니다.
 
-```
-                 +----------------+
-                 |  Application   |
-                 +--------+-------+
-                          |
-          +---------------+---------------+
-          |                               |
-   CUD, Transaction                   SELECT
-          |                               |
-          v                               v
-+-------------------+          +-------------------+
-| Primary MySQL     |  ----->  | Read Replica 1    |
-| Writer DB         | binlog   | Reader DB         |
-+-------------------+          +-------------------+
-          |
-          | binlog replication
-          v
-+-------------------+
-| Read Replica 2    |
-| Reader DB         |
-+-------------------+
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application"] -->|"CUD / Transaction"| W["Primary MySQL<br/>Writer DB"]
+    A -->|"SELECT"| R1["Read Replica 1<br/>Reader DB"]
+    W -->|"binlog"| R1
+    W -->|"binlog replication"| R2["Read Replica 2<br/>Reader DB"]
 ```
 
 Primary DB는 모든 변경 작업을 처리합니다.
@@ -102,11 +98,17 @@ Read Replica를 두면 읽기 트래픽을 분산해서 Primary를 상대적으�
 
 Read Replica는 여러 대로 늘릴 수 있습니다.
 
-```
-SELECT 트래픽 증가
-    |
-    v
-Read Replica 추가
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["SELECT 트래픽 증가"]
+    N1["Read Replica 추가"]
+    N0 --> N1
 ```
 
 즉, 읽기 성능은 수평 확장이 가능합니다.
@@ -123,16 +125,17 @@ Primary DB에서 INSERT, UPDATE, DELETE 같은 변경이 발생하면 MySQL은 �
 
 Replica는 이 Binary Log를 가져와서 동일한 변경을 자기 DB에도 적용합니다.
 
-```
-Primary
-  |
-  | 1. 변경 발생
-  | 2. binlog 기록
-  v
-Replica
-  |
-  | 3. binlog 수신
-  | 4. 동일 변경 적용
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Primary: 변경 발생 / binlog 기록"]
+    N1["Replica: binlog 수신 / 동일 변경 적용"]
+    N0 --> N1
 ```
 
 ### 복제 지연
@@ -210,15 +213,17 @@ Spring에서는 보통 `AbstractRoutingDataSource`를 사용해서 현재 트랜
 
 애플리케이션에서 직접 분리하지 않고, 중간에 DB Proxy를 두는 방식도 있습니다.
 
-```
-Application
-   |
-   v
-ProxySQL / MySQL Router
-   |
-   |-- Write Query --> Primary
-   |
-   |-- Read Query ---> Replica
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application"] --> P["ProxySQL / MySQL Router"]
+    P -->|"Write Query"| W["Primary"]
+    P -->|"Read Query"| R["Replica"]
 ```
 
 대표적으로 다음 도구를 사용할 수 있습니다.
@@ -341,20 +346,20 @@ public class DataSourceConfig {
 
 CUD/Read 분리에서 가장 흔한 문제는 "방금 쓴 데이터가 안 보이는 현상"입니다.
 
-```
-사용자 회원가입
-   |
-   v
-Primary INSERT 성공
-   |
-   v
-바로 사용자 정보 조회
-   |
-   v
-Replica SELECT
-   |
-   v
-복제 지연 때문에 데이터 없음
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["사용자 회원가입"]
+    N1["Primary INSERT 성공"]
+    N2["바로 사용자 정보 조회"]
+    N3["Replica SELECT"]
+    N4["복제 지연 때문에 데이터 없음"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 이 문제는 버그처럼 보이지만, 구조적으로 자연스럽게 발생할 수 있습니다.
@@ -367,14 +372,18 @@ Replica SELECT
 
 사용자가 CUD 작업을 한 직후에는 일정 시간 동안 SELECT도 Primary로 보냅니다.
 
-```
-INSERT / UPDATE / DELETE 발생
-   |
-   v
-현재 사용자 세션에 write flag 저장
-   |
-   v
-몇 초 동안 SELECT도 Primary로 라우팅
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["INSERT / UPDATE / DELETE 발생"]
+    N1["현재 사용자 세션에 write flag 저장"]
+    N2["몇 초 동안 SELECT도 Primary로 라우팅"]
+    N0 --> N1 --> N2
 ```
 
 예를 들어 다음과 같은 정책을 둘 수 있습니다.
@@ -468,12 +477,16 @@ Primary 1대
 Read Replica 1대
 ```
 
-```
-Application
-   |
-   |-- CUD, 중요 SELECT --> Primary
-   |
-   |-- 일반 SELECT ------> Replica
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application"] -->|"CUD / 중요 SELECT"| W["Primary"]
+    A -->|"일반 SELECT"| R["Replica"]
 ```
 
 이 구조만으로도 Primary의 조회 부하를 상당히 줄일 수 있습니다.
@@ -489,13 +502,18 @@ Primary 1대
 Read Replica 2~3대
 ```
 
-```
-Application
-   |
-   |-- CUD --> Primary
-   |-- SELECT --> Replica 1
-   |-- SELECT --> Replica 2
-   |-- SELECT --> Replica 3
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application"] -->|"CUD"| W["Primary"]
+    A -->|"SELECT"| R1["Replica 1"]
+    A -->|"SELECT"| R2["Replica 2"]
+    A -->|"SELECT"| R3["Replica 3"]
 ```
 
 이때 애플리케이션 또는 DB Proxy에서 Replica 간 로드밸런싱을 해야 합니다.
@@ -530,11 +548,17 @@ AWS RDS for MySQL에서는 Read Replica를 생성할 수 있습니다.
 
 구성은 보통 다음과 같습니다.
 
-```
-RDS Primary Instance
-   |
-   v
-RDS Read Replica
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["RDS Primary Instance"]
+    N1["RDS Read Replica"]
+    N0 --> N1
 ```
 
 애플리케이션에서는 Writer Endpoint와 Reader Endpoint를 분리해서 사용합니다.
@@ -559,11 +583,17 @@ NCP Cloud DB for MySQL에서도 읽기 부하 분산을 위해 Read Replica 구�
 
 개념은 동일합니다.
 
-```
-Primary DB
-   |
-   v
-Read Replica DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Primary DB"]
+    N1["Read Replica DB"]
+    N0 --> N1
 ```
 
 애플리케이션에서는 다음처럼 분리합니다.
@@ -699,16 +729,17 @@ readerPool: Replica용
 
 구조는 다음과 같습니다.
 
-```
-Controller
-   |
-Service
-   |
-   |-- @Transactional
-   |       -> Writer DB
-   |
-   |-- @Transactional(readOnly = true)
-           -> Reader DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Controller"] --> S["Service"]
+    S -->|"@Transactional"| W["Writer DB"]
+    S -->|"@Transactional: readOnly = true"| R["Reader DB"]
 ```
 
 ---
