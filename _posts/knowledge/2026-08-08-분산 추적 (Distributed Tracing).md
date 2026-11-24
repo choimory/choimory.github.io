@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "분산 추적 (Distributed Tracing)"
 date: 2026-08-08T00:00:00
 toc: true
@@ -45,13 +46,17 @@ Trace 안에서 하나의 단위 작업을 의미합니다. DB 쿼리, HTTP 호�
 
 Span들은 부모-자식 관계를 형성하며 트리 구조를 이룹니다. 시각화되면 Gantt 차트와 유사한 형태가 되며, 이를 Flame Graph 또는 Waterfall View라 부릅니다.
 
-```
-[Root Span: POST /orders          0ms ~ 320ms]
-  ├─ [Span: validate user         0ms ~ 20ms ]
-  ├─ [Span: create order         20ms ~ 150ms]
-  │    └─ [Span: DB INSERT       30ms ~ 120ms]
-  └─ [Span: charge payment      150ms ~ 300ms]
-       └─ [Span: HTTP /charge   155ms ~ 295ms]
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Root Span: POST /orders<br/>0ms ~ 320ms"] --> A["validate user<br/>0ms ~ 20ms"]
+    R --> B["create order<br/>20ms ~ 150ms"] --> C["DB INSERT<br/>30ms ~ 120ms"]
+    R --> D["charge payment<br/>150ms ~ 300ms"] --> E["HTTP /charge<br/>155ms ~ 295ms"]
 ```
 
 ### Context Propagation (컨텍스트 전파)
@@ -94,13 +99,19 @@ OTel 자체는 수집과 전송만 담당하며, 저장과 시각화는 백엔�
 
 #### Collector 아키텍처
 
-```
-[App + OTel SDK]
-     ↓ OTLP
-[OTel Collector]
-  ├─ Receiver (OTLP, Jaeger, Zipkin...)
-  ├─ Processor (batch, filter, sample...)
-  └─ Exporter → Jaeger / Tempo / OTLP
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["App + OTel SDK"] -->|"OTLP"| R
+    subgraph C["OTel Collector"]
+        R["Receiver<br/>OTLP / Jaeger / Zipkin / ..."] --> P["Processor<br/>batch / filter / sample / ..."] --> E["Exporter"]
+    end
+    E --> B["Jaeger / Tempo / OTLP"]
 ```
 
 ### 백엔드 도구 비교
@@ -223,29 +234,41 @@ Service Mesh는 마이크로서비스 간의 통신을 애플리케이션 코드
 
 ## Istio 아키텍처
 
-```
-Control Plane
-├── istiod
-│   ├── Pilot      : 서비스 디스커버리, 트래픽 규칙 배포
-│   ├── Citadel    : mTLS 인증서 관리
-│   └── Galley     : 설정 검증
-
-Data Plane
-└── Envoy Sidecar (각 Pod 옆에 자동 주입)
-    ├── 인바운드 트래픽 가로채기
-    ├── 아웃바운드 트래픽 가로채기
-    ├── Span 자동 생성
-    └── Trace Header 자동 전파
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph C["Control Plane"]
+        I["istiod"] --- P["Pilot: 서비스 디스커버리 / 트래픽 규칙 배포"]
+        I --- T["Citadel: mTLS 인증서 관리"]
+        I --- G["Galley: 설정 검증"]
+    end
+    subgraph D["Data Plane"]
+        E["Envoy Sidecar: 각 Pod 옆에 자동 주입"] --- A["인바운드 / 아웃바운드 트래픽 가로채기"]
+        E --- S["Span 자동 생성"]
+        E --- H["Trace Header 자동 전파"]
+    end
 ```
 
 Pod 안에서의 구조:
 
-```
-[Pod]
- ├── App Container (Spring Boot)
- └── Envoy Proxy (istio-proxy)
-      ├── 포트 15001 : 아웃바운드 인터셉트
-      └── 포트 15006 : 인바운드 인터셉트
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph P["Pod"]
+        A["App Container: Spring Boot"]
+        E["Envoy Proxy: istio-proxy"] --- O["포트 15001: 아웃바운드 인터셉트"]
+        E --- I["포트 15006: 인바운드 인터셉트"]
+    end
 ```
 
 ---
@@ -256,16 +279,20 @@ Pod 안에서의 구조:
 
 Envoy 프록시는 모든 HTTP 요청에 대해 자동으로 아래 작업을 수행합니다.
 
-```
-요청 인입 시:
-1. Trace Header 존재 확인
-2. 없으면 → 새 Trace ID, Span ID 생성
-3. 있으면 → 기존 Trace ID 유지, 새 Span ID 생성
-
-요청 아웃바운드 시:
-1. 기존 Trace Header에 현재 Span ID를 Parent로 설정
-2. 다음 서비스로 Header 전달
-3. 완료 후 Jaeger/Zipkin으로 Span 리포트
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["요청 인입"] --> H{"Trace Header 존재?"}
+    H -->|"없음"| N["새 Trace ID / Span ID 생성"]
+    H -->|"있음"| E["기존 Trace ID 유지<br/>새 Span ID 생성"]
+    N --> O["요청 아웃바운드"]
+    E --> O
+    O --> P["기존 Trace Header에<br/>현재 Span ID를 Parent로 설정"] --> F["다음 서비스로 Header 전달"] --> R["완료 후 Jaeger / Zipkin으로 Span 리포트"]
 ```
 
 ### 전파되는 Header
@@ -291,15 +318,16 @@ traceparent  (W3C TraceContext)
 
 Istio의 자동 추적에는 중요한 한계가 있습니다. Envoy는 인바운드와 아웃바운드 요청을 "각각 독립적으로" 인터셉트합니다. 두 요청을 "같은 Trace"로 묶으려면, 애플리케이션이 인바운드에서 받은 Trace Header를 아웃바운드 요청에 그대로 넘겨줘야 합니다.
 
-```
-[Service A] → (Trace Header 포함) → [Envoy A] → [Service B] → [Envoy B]
-
-Envoy A가 생성한 Span과 Envoy B가 생성한 Span이
-같은 Trace로 연결되려면:
-
-Service B의 앱 코드가
-인바운드 Header를 읽어서
-아웃바운드 요청에 그대로 포워딩해야 함
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Service A"] -->|"Trace Header 포함"| EA["Envoy A"] --> B["Service B"] --> EB["Envoy B"]
+    B -.-> N["같은 Trace로 연결하려면<br/>앱 코드가 인바운드 Header를 읽어<br/>아웃바운드 요청에 그대로 포워딩"]
 ```
 
 ### Spring Boot에서 Header 포워딩 구현
@@ -449,12 +477,21 @@ spec:
 
 ### Trace ID 공유 동작 방식
 
-```
-1. 외부 요청 → Envoy(Sidecar) → Trace ID 생성, Header에 삽입
-2. Envoy → App Container(Spring Boot) → Header 포함 요청 전달
-3. Micrometer Tracing → Header에서 Trace ID 추출, Context로 설정
-4. @Observed 메서드 → 같은 Trace ID의 Child Span으로 기록
-5. 결과: Jaeger에서 Envoy Span + App Span이 하나의 Trace로 표시
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["외부 요청 → Envoy Sidecar"]
+    N1["Trace ID 생성 / Header에 삽입"]
+    N2["App Container: Spring Boot에 Header 포함 요청 전달"]
+    N3["Micrometer Tracing: Trace ID 추출 / Context 설정"]
+    N4["@Observed: 같은 Trace ID의 Child Span 기록"]
+    N5["Jaeger: Envoy Span + App Span을 하나의 Trace로 표시"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 ---

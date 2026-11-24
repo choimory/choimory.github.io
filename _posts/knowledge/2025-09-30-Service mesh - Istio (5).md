@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Service mesh - Istio (5)"
 date: 2025-09-30T00:00:05
 toc: true
@@ -16,81 +17,55 @@ tags:
 
 ### Ingress: 클러스터의 출입구
 
-```
-Internet
-   ↓
-┌──────────────────────────────────────┐
-│  Kubernetes Cluster                  │
-│                                      │
-│  ┌────────────────┐                 │
-│  │ Ingress        │ ← 여기가 Ingress │
-│  │ (출입구)       │                  │
-│  └────────┬───────┘                 │
-│           │                          │
-│           ↓                          │
-│     Service A → Service B            │
-│           ↓                          │
-│     Service C                        │
-│                                      │
-└──────────────────────────────────────┘
-
-역할: 외부 → 내부 (진입만 담당)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] --> G
+    subgraph K["Kubernetes Cluster"]
+        G["Ingress<br/>외부에서 내부로 진입"] --> A["Service A"]
+        A --> B["Service B"]
+        A --> C["Service C"]
+    end
 ```
 
 ### Service Mesh: 내부의 모든 통신
 
-```
-Internet
-   ↓
-┌──────────────────────────────────────┐
-│  Kubernetes Cluster                  │
-│                                      │
-│  ┌────────────────┐                 │
-│  │ Ingress        │                  │
-│  └────────┬───────┘                 │
-│           │                          │
-│  ┌────────▼───────┐                 │
-│  │ [Envoy]        │                  │
-│  │ Service A      │                  │
-│  └────────┬───────┘                 │
-│           │ ← 여기부터 Service Mesh │
-│  ┌────────▼───────┐                 │
-│  │ [Envoy]        │                  │
-│  │ Service B      │                  │
-│  └────────┬───────┘                 │
-│           │                          │
-│  ┌────────▼───────┐                 │
-│  │ [Envoy]        │                  │
-│  │ Service C      │                  │
-│  └────────────────┘                 │
-│                                      │
-└──────────────────────────────────────┘
-
-역할: 내부 ↔ 내부 (모든 서비스 간 통신)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] --> G
+    subgraph K["Kubernetes Cluster"]
+        G["Ingress"] --> A["Envoy + Service A"]
+        subgraph M["Service Mesh: 내부 서비스 간 통신"]
+            A --> B["Envoy + Service B"] --> C["Envoy + Service C"]
+        end
+    end
 ```
 
 ## 계층별 역할 분담
 
-```
-┌─────────────────────────────────────────────────┐
-│ Internet (외부 사용자)                          │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ↓
-┌─────────────────────────────────────────────────┐
-│ Layer 1: Ingress (진입 제어)                    │
-│ - 도메인 라우팅 (api.example.com → Service)    │
-│ - TLS 종료                                      │
-│ - 외부 → 내부 첫 진입점                        │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ↓
-┌─────────────────────────────────────────────────┐
-│ Layer 2: Service Mesh (내부 통신 제어)         │
-│ - Service A ↔ Service B                        │
-│ - Service B ↔ Service C                        │
-│ - mTLS, 라우팅, 관찰성                          │
-└─────────────────────────────────────────────────┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Internet: 외부 사용자"]
+    N1["Layer 1: Ingress — 진입 제어<br/>도메인 라우팅: api.example.com → Service<br/>TLS 종료 / 외부에서 내부 첫 진입점"]
+    N2["Layer 2: Service Mesh — 내부 통신 제어<br/>Service A ↔ B / Service B ↔ C<br/>mTLS / 라우팅 / 관찰성"]
+    N0 --> N1 --> N2
 ```
 
 ## Ingress 상세
@@ -173,9 +148,16 @@ spec:
             name: web-service
 ```
 
-```
-api.example.com → api-service
-web.example.com → web-service
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["api.example.com"] --> B["api-service"]
+    C["web.example.com"] --> D["web-service"]
 ```
 
 ### 2. 경로 기반 라우팅
@@ -226,10 +208,15 @@ spec:
             name: web-service
 ```
 
-```
-HTTPS (암호화) → Ingress → HTTP (평문) → Service
-                  ↑
-             TLS 종료 지점
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["HTTPS: 암호화"] --> B["Ingress<br/>TLS 종료 지점"] -->|"HTTP: 평문"| C["Service"]
 ```
 
 ### Ingress가 못하는 일
@@ -249,27 +236,21 @@ HTTPS (암호화) → Ingress → HTTP (평문) → Service
 
 ### 기본 구조
 
-```
-모든 Pod에 사이드카 배치:
-
-┌─────────────────┐
-│ Frontend Pod    │
-│ ┌──────┐        │
-│ │ App  │        │
-│ └──┬───┘        │
-│    ↓            │
-│ ┌──────┐        │     ┌─────────────────┐
-│ │Envoy │────────┼─────→│ Backend Pod     │
-│ └──────┘        │     │ ┌──────┐        │
-└─────────────────┘     │ │Envoy │        │
-                        │ └──┬───┘        │
-                        │    ↓            │
-                        │ ┌──────┐        │
-                        │ │ App  │        │
-                        │ └──────┘        │
-                        └─────────────────┘
-
-모든 통신이 Envoy를 거침
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph F["Frontend Pod"]
+        A["App"] --> EA["Envoy"]
+    end
+    subgraph B["Backend Pod"]
+        EB["Envoy"] --> C["App"]
+    end
+    EA -->|"모든 통신이 Envoy 경유"| EB
 ```
 
 ### Service Mesh가 하는 일
@@ -304,15 +285,22 @@ spec:
       weight: 10      # 10%는 v3
 ```
 
-```
-내부 통신 흐름:
-Product Service 
-    → (Envoy)
-    → VirtualService 규칙 적용
-    → 헤더가 jason이면 v2로
-    → 아니면 90% v1, 10% v3로
-    → (Envoy)
-    → Reviews Service
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Product Service"] --> E["Envoy"] --> V["VirtualService 규칙 적용"] --> H{"헤더가 jason인가?"}
+    H -->|"Yes"| V2["Reviews v2"]
+    H -->|"No"| W{"가중치 분배"}
+    W -->|"90%"| V1["Reviews v1"]
+    W -->|"10%"| V3["Reviews v3"]
+    V1 --> R["Envoy → Reviews Service"]
+    V2 --> R
+    V3 --> R
 ```
 
 ### 2. 자동 mTLS
@@ -328,18 +316,21 @@ spec:
     mode: STRICT  # 모든 통신 암호화 강제
 ```
 
-```
-Service A → Service B 통신:
-
-Without Istio:
-A ─(평문)─→ B
-누구나 스니핑 가능
-
-With Istio:
-A → [Envoy A] ═══(mTLS)═══ [Envoy B] → B
-    자동 암호화              자동 복호화
-    
-애플리케이션 코드는 변경 없음!
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph Without["Without Istio: 스니핑 가능"]
+        A["Service A"] -->|"평문"| B["Service B"]
+    end
+    subgraph With["With Istio: 애플리케이션 코드 변경 없음"]
+        C["Service A"] --> EA["Envoy A: 자동 암호화"]
+        EA <-->|"mTLS"| EB["Envoy B: 자동 복호화"] --> D["Service B"]
+    end
 ```
 
 ### 3. 세밀한 접근 제어
@@ -365,19 +356,17 @@ spec:
         paths: ["/api/query"]     # 이 경로만
 ```
 
-```
-실제 동작:
-1. Frontend → Database 시도
-   → Envoy: "너는 frontend SA야, backend만 허용됨"
-   → ❌ 403 Forbidden
-
-2. Backend → Database GET /api/query
-   → Envoy: "backend SA, GET 메서드, /api/query 경로"
-   → ✅ 허용
-
-3. Backend → Database DELETE /api/data
-   → Envoy: "DELETE는 허용 안 됨"
-   → ❌ 403 Forbidden
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    F["Frontend → Database"] --> A["Envoy: frontend SA<br/>backend만 허용"] --> X["403 Forbidden"]
+    B["Backend → Database<br/>GET /api/query"] --> C["Envoy: backend SA<br/>GET /api/query"] --> Y["허용"]
+    D["Backend → Database<br/>DELETE /api/data"] --> E["Envoy: DELETE 허용 안 됨"] --> Z["403 Forbidden"]
 ```
 
 ### 4. 복원력 (Resilience)
@@ -547,31 +536,22 @@ spec:
 
 ### 전체 아키텍처
 
-```
-Internet
-   ↓
-┌──────────────────────────────────────────────────┐
-│ [NGINX Ingress Controller]                       │
-│ - TLS 종료                                        │
-│ - 도메인 라우팅                                   │
-│ - Rate Limiting (외부 공격 방어)                  │
-└──────────────────┬───────────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────────┐
-│ [Istio Ingress Gateway]                          │
-│ - L7 라우팅                                       │
-│ - 클러스터 경계 제어                              │
-└──────────────────┬───────────────────────────────┘
-                   │
-     ┌─────────────┼─────────────┐
-     ↓             ↓             ↓
-┌─────────┐  ┌─────────┐  ┌─────────┐
-│[Envoy]  │  │[Envoy]  │  │[Envoy]  │
-│Service A│→→│Service B│→→│Service C│
-└─────────┘  └─────────┘  └─────────┘
-     ↑             ↑             ↑
-     └─────────────┴─────────────┘
-       Service Mesh (내부 제어)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] --> N["NGINX Ingress Controller<br/>TLS 종료 / 도메인 라우팅<br/>Rate Limiting: 외부 공격 방어"]
+    N --> G["Istio Ingress Gateway<br/>L7 라우팅 / 클러스터 경계 제어"]
+    subgraph M["Service Mesh: 내부 제어"]
+        A["Envoy + Service A"] --> B["Envoy + Service B"] --> C["Envoy + Service C"]
+    end
+    G --> A
+    G --> B
+    G --> C
 ```
 
 ### 역할 분담
@@ -651,14 +631,17 @@ spec:
 
 ### Ingress만 사용
 
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] --> G["Ingress"] --> F["Frontend"] -->|"직접"| P["Product"] -->|"직접"| V["Reviews"]
+    P --> R["Ratings"]
 ```
-Internet
-   ↓
-[Ingress]
-   ↓
-Frontend ─(직접)─→ Product ─(직접)─→ Reviews
-                              ↓
-                          Ratings
 
 문제점:
 1. Frontend → Product 통신 제어 불가
@@ -666,20 +649,22 @@ Frontend ─(직접)─→ Product ─(직접)─→ Reviews
 3. 내부 통신 암호화 안 됨
 4. Reviews 장애 시 재시도 로직을 코드로 구현
 5. Product → Reviews 메트릭 수집 어려움
-```
 
 ### Ingress + Istio 사용
 
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["Internet"] --> G["Ingress"] --> W["Istio Gateway"] --> F["Envoy + Frontend"] --> P["Envoy + Product"]
+    P -->|"90%"| V1["Envoy + Reviews v1"]
+    P -->|"10%"| V2["Envoy + Reviews v2"]
+    P --> R["Envoy + Ratings"]
 ```
-Internet
-   ↓
-[Ingress]
-   ↓
-[Istio Gateway]
-   ↓
-[Envoy] Frontend → [Envoy] Product → [Envoy] Reviews v1 (90%)
-                                   → [Envoy] Reviews v2 (10%)
-                                   → [Envoy] Ratings
 
 해결됨:
 1. ✅ 모든 통신 제어 가능
@@ -687,7 +672,6 @@ Internet
 3. ✅ 자동 mTLS
 4. ✅ 자동 재시도
 5. ✅ 전체 경로 추적
-```
 
 ## 선택 기준
 
@@ -757,61 +741,61 @@ Sidecar (50개 Pod 가정): 5GB, 5 cores
 
 ### Ingress = 클러스터 전체의 단일 리버스 프록시
 
-```
-                    ┌─────────────┐
-외부 트래픽  ─────→ │   Ingress   │ ← 클러스터 전체에 하나 (또는 몇 개)
-                    │   (Nginx)   │    중앙 집중식 리버스 프록시
-                    └──────┬──────┘
-                           │
-            ┌──────────────┼──────────────┐
-            ↓              ↓              ↓
-       Service A      Service B      Service C
-       
-하나의 Nginx가 전체 클러스터 진입점 담당
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    E["외부 트래픽"] --> I["Ingress: Nginx<br/>클러스터당 하나 또는 몇 개<br/>중앙 집중식 리버스 프록시"]
+    I --> A["Service A"]
+    I --> B["Service B"]
+    I --> C["Service C"]
 ```
 
 ### Istio = 각 Pod마다 전용 리버스 프록시
 
-```
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│  Pod A       │    │  Pod B       │    │  Pod C       │
-│  ┌────────┐  │    │  ┌────────┐  │    │  ┌────────┐  │
-│  │App     │  │    │  │App     │  │    │  │App     │  │
-│  └───┬────┘  │    │  └───▲────┘  │    │  └───▲────┘  │
-│      │       │    │      │       │    │      │       │
-│  ┌───▼────┐  │    │  ┌───┴────┐  │    │  ┌───┴────┐  │
-│  │Envoy   │──┼────┼─→│Envoy   │──┼────┼─→│Envoy   │  │
-│  │(Nginx  │  │    │  │(Nginx  │  │    │  │(Nginx  │  │
-│  │ 같은)  │  │    │  │ 같은)  │  │    │  │ 같은)  │  │
-│  └────────┘  │    │  └────────┘  │    │  └────────┘  │
-└──────────────┘    └──────────────┘    └──────────────┘
-
-각 Pod마다 전용 Nginx(Envoy) 프록시가 붙음
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph PA["Pod A"]
+        A["App A"] --> EA["Envoy A<br/>전용 리버스 프록시"]
+    end
+    subgraph PB["Pod B"]
+        EB["Envoy B<br/>전용 리버스 프록시"] --> B["App B"]
+    end
+    subgraph PC["Pod C"]
+        EC["Envoy C<br/>전용 리버스 프록시"] --> C["App C"]
+    end
+    EA --> EB --> EC
 ```
 
 ## 시각적 비교
 
 ### 전통적인 아키텍처 (Nginx만)
 
-```
-┌────────────────────────────────────────┐
-│  외부                                  │
-└────────┬───────────────────────────────┘
-         │
-    ┌────▼─────┐
-    │  Nginx   │ ← 하나의 중앙 프록시
-    │ (Ingress)│
-    └────┬─────┘
-         │
-    ┌────┼────┐
-    ↓    ↓    ↓
-  ┌───┐┌───┐┌───┐
-  │A  ││B  ││C  │ ← 서비스들 (프록시 없음)
-  └───┘└───┘└───┘
-    │    │    │
-    └────┼────┘
-         ↓
-      (직접 통신)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    E["외부"] --> N["Nginx: Ingress<br/>하나의 중앙 프록시"]
+    N --> A["Service A: 프록시 없음"]
+    N --> B["Service B: 프록시 없음"]
+    N --> C["Service C: 프록시 없음"]
+    A --- D["내부 서비스 간 직접 통신"]
+    B --- D
+    C --- D
 ```
 
 역할:
@@ -821,27 +805,21 @@ Sidecar (50개 Pod 가정): 5GB, 5 cores
 
 ### Istio 아키텍처
 
-```
-┌────────────────────────────────────────┐
-│  외부                                  │
-└────────┬───────────────────────────────┘
-         │
-    ┌────▼─────┐
-    │  Nginx   │ ← 여전히 진입점
-    │ (Ingress)│
-    └────┬─────┘
-         │
-    ┌────┼────┐
-    ↓    ↓    ↓
-  ┌───┐┌───┐┌───┐
-  │[P]││[P]││[P]│ ← 각 서비스마다 프록시 추가
-  │ A ││ B ││ C │
-  └─┬─┘└─▲─┘└─▲─┘
-    │    │    │
-    └────┼────┘
-         ↑
-  [P] = Envoy 프록시
-  (모든 통신이 프록시 경유)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    E["외부"] --> N["Nginx: Ingress<br/>클러스터 진입점"]
+    N --> A["Envoy + Service A"]
+    N --> B["Envoy + Service B"]
+    N --> C["Envoy + Service C"]
+    A --- D["모든 서비스 간 통신은<br/>각 Envoy 프록시 경유"]
+    B --- D
+    C --- D
 ```
 
 역할:

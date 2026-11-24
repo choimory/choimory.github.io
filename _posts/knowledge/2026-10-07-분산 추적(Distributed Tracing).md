@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "분산 추적(Distributed Tracing)"
 date: 2026-10-07T00:00:00
 toc: true
@@ -12,20 +13,22 @@ tags: ["Trace"]
 
 예를 들어 다음과 같은 구조가 있다고 보겠습니다.
 
-```
-사용자
-  ↓
-Front
-  ↓
-API Gateway
-  ↓
-Order Service
-  ↓
-Redis
-  ↓
-Payment Service
-  ↓
-DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["사용자"]
+    N1["Front"]
+    N2["API Gateway"]
+    N3["Order Service"]
+    N4["Redis"]
+    N5["Payment Service"]
+    N6["DB"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5 --> N6
 ```
 
 일반 로그만 보면 각각의 서비스에 로그가 따로 남기 때문에 "이 로그들이 같은 사용자 요청에서 발생한 것인지" 연결하기 어렵습니다.
@@ -40,14 +43,18 @@ DB
 
 "Trace"는 하나의 요청이 시작해서 끝날 때까지의 전체 흐름입니다.
 
-```
-Trace
- ├─ API Gateway
- ├─ Order Service
- │   ├─ Redis
- │   └─ DB
- └─ Payment Service
-     └─ DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    T["Trace"] --> A["API Gateway"]
+    T --> O["Order Service"] --> R["Redis"]
+    O --> D1["DB"]
+    T --> P["Payment Service"] --> D2["DB"]
 ```
 
 예를 들어
@@ -70,18 +77,20 @@ Trace ID: a3f217...
 
 "Span"은 Trace 내부의 하나의 작업 단위입니다.
 
-```
-Trace
-│
-├─ Span: API Gateway
-│
-├─ Span: Order Service
-│
-├─ Span: Redis 조회
-│
-├─ Span: Payment Service 호출
-│
-└─ Span: MySQL Query
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Trace"]
+    R --> N0["Span: API Gateway"]
+    R --> N1["Span: Order Service"]
+    R --> N2["Span: Redis 조회"]
+    R --> N3["Span: Payment Service 호출"]
+    R --> N4["Span: MySQL Query"]
 ```
 
 각 Span에는 보통 다음과 같은 정보가 있습니다.
@@ -108,50 +117,52 @@ Span
 
 예를 들어 다음 요청이 있다고 가정합니다.
 
-```
-사용자
- ↓
-API Gateway
- ↓
-Order Service
- ↓
-Payment Service
- ↓
-DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["사용자"]
+    N1["API Gateway"]
+    N2["Order Service"]
+    N3["Payment Service"]
+    N4["DB"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 분산 추적 데이터는 다음처럼 구성됩니다.
 
-```
-Trace ID: abc123
-
-Span A
-API Gateway
-100ms
-│
-└── Span B
-    Order Service
-    80ms
-    │
-    └── Span C
-        Payment Service
-        50ms
-        │
-        └── Span D
-            MySQL
-            30ms
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph T["Trace ID: abc123"]
+        A["Span A: API Gateway<br/>100ms"] --> B["Span B: Order Service<br/>80ms"] --> C["Span C: Payment Service<br/>50ms"] --> D["Span D: MySQL<br/>30ms"]
+    end
 ```
 
 모든 Span은 동일한 "Trace ID"를 공유합니다.
 
 Span끼리는 Parent/Child 관계를 가집니다.
 
-```
-Trace ID
-   │
-   ├── Span ID
-   │
-   └── Parent Span ID
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Trace ID"]
+    R --> N0["Span ID"]
+    R --> N1["Parent Span ID"]
 ```
 
 ---
@@ -164,16 +175,15 @@ Trace ID
 
 예를 들어 HTTP 요청이라면 헤더에 포함됩니다.
 
-```
-API Gateway
-   │
-   │ Trace Context
-   ▼
-Order Service
-   │
-   │ Trace Context
-   ▼
-Payment Service
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["API Gateway"] -->|"Trace Context"| O["Order Service"] -->|"Trace Context"| P["Payment Service"]
 ```
 
 현재 가장 일반적인 표준은 W3C Trace Context입니다.
@@ -249,14 +259,19 @@ Loki, Elasticsearch 등이 대표적입니다.
 
 어디에서 문제가 발생했는지를 확인합니다.
 
-```
-Gateway        20ms
-   ↓
-Order Service  50ms
-   ↓
-Payment       900ms  ← 문제
-   ↓
-DB             30ms
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Gateway: 20ms"]
+    N1["Order Service: 50ms"]
+    N2["Payment: 900ms — 문제 지점"]
+    N3["DB: 30ms"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 즉,
@@ -280,28 +295,39 @@ Logs
 
 Monolithic Application에서는 요청이 하나의 애플리케이션 안에서 처리되는 경우가 많습니다.
 
-```
-Application
- ├─ Controller
- ├─ Service
- ├─ Repository
- └─ DB
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["Application"]
+    R --> N0["Controller"]
+    R --> N1["Service"]
+    R --> N2["Repository"]
+    R --> N3["DB"]
 ```
 
 따라서 로그 추적이 상대적으로 쉽습니다.
 
 반면 MSA에서는 다음처럼 됩니다.
 
-```
-Gateway
- ↓
-User Service
- ↓
-Order Service
- ↓
-Payment Service
- ↓
-Notification Service
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Gateway"]
+    N1["User Service"]
+    N2["Order Service"]
+    N3["Payment Service"]
+    N4["Notification Service"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 각각 다른 Pod일 수도 있습니다.
@@ -358,21 +384,19 @@ DB Query: 800ms
 
 구조를 단순화하면 다음과 같습니다.
 
-```
-Application
-(Spring Boot / NestJS / Next.js)
-        │
-        │ Trace / Metric / Log
-        ▼
-OpenTelemetry
-        │
-        ▼
-OpenTelemetry Collector
-        │
-        ├── Jaeger
-        ├── Grafana Tempo
-        ├── Zipkin
-        └── 기타 Observability Backend
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Application<br/>Spring Boot / NestJS / Next.js"] -->|"Trace / Metric / Log"| O["OpenTelemetry"] --> C["OpenTelemetry Collector"]
+    C --> J["Jaeger"]
+    C --> T["Grafana Tempo"]
+    C --> Z["Zipkin"]
+    C --> B["기타 Observability Backend"]
 ```
 
 ### OpenTelemetry
@@ -403,12 +427,18 @@ Trace를 저장하고 조회하는 Backend로 많이 사용하는 것이 다음�
 
 분산 추적에 특화된 대표적인 오픈소스 도구입니다.
 
-```
-Application
- ↓
-OpenTelemetry
- ↓
-Jaeger
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Application"]
+    N1["OpenTelemetry"]
+    N2["Jaeger"]
+    N0 --> N1 --> N2
 ```
 
 Trace 검색과 요청 흐름 분석에 사용합니다.
@@ -426,12 +456,18 @@ Grafana    → Visualization
 
 이렇게 구성하면 Grafana 하나에서
 
-```
-Metric
- ↓
-Trace
- ↓
-Log
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Metric"]
+    N1["Trace"]
+    N2["Log"]
+    N0 --> N1 --> N2
 ```
 
 를 서로 연결해서 볼 수 있다는 장점이 있습니다.
@@ -442,19 +478,27 @@ Log
 
 Kubernetes에서는 흔히 다음처럼 구성합니다.
 
-```
-                    Kubernetes
-
-API Gateway        ─┐
-User Service       ─┤
-Order Service      ─┤
-Payment Service    ─┤── OTLP ──→ OpenTelemetry Collector
-Notification Svc  ─┘                    │
-                                       ▼
-                                   Grafana Tempo
-                                       │
-                                       ▼
-                                    Grafana
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph K["Kubernetes"]
+        A["API Gateway"]
+        U["User Service"]
+        O["Order Service"]
+        P["Payment Service"]
+        N["Notification Svc"]
+    end
+    A -->|"OTLP"| C["OpenTelemetry Collector"]
+    U -->|"OTLP"| C
+    O -->|"OTLP"| C
+    P -->|"OTLP"| C
+    N -->|"OTLP"| C
+    C --> T["Grafana Tempo"] --> G["Grafana"]
 ```
 
 애플리케이션이 각각 Observability Backend로 직접 전송하게 만들기보다는 중간에 "OpenTelemetry Collector"를 두는 구조가 일반적입니다.
@@ -465,33 +509,35 @@ Notification Svc  ─┘                    │
 
 예를 들어 다음 구조를 기준으로 볼 수 있습니다.
 
-```
-User
- ↓
-Next.js
- ↓
-API Gateway
- ↓
-User Service
-Order Service
-Payment Service
-Notification Service
- ↓
-Redis / MySQL
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    U["User"] --> N["Next.js"] --> G["API Gateway"] --> S["User Service / Order Service<br/>Payment Service / Notification Service"] --> D["Redis / MySQL"]
 ```
 
 여기에 OpenTelemetry를 적용하면 다음과 같은 요청을 하나의 Trace로 볼 수 있습니다.
 
-```
-Trace ID: ABC
-
-API Gateway
- └─ Order Service
-     ├─ Redis
-     ├─ MySQL
-     └─ Payment Service
-         ├─ MySQL
-         └─ External Payment API
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph T["Trace ID: ABC"]
+        A["API Gateway"] --> O["Order Service"]
+        O --> R["Redis"]
+        O --> M["MySQL"]
+        O --> P["Payment Service"]
+        P --> D["MySQL"]
+        P --> E["External Payment API"]
+    end
 ```
 
 특히 API Gateway에서 Trace가 시작되도록 구성하면 MSA 전체 요청 흐름을 보기 편합니다.
@@ -534,15 +580,15 @@ traceId=abc123
 
 전체 흐름은 다음과 연결됩니다.
 
-```
-Grafana Metrics
-      │
-      ▼
-Tempo Trace
-      │
-      │ Trace ID
-      ▼
-Loki Logs
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    M["Grafana Metrics"] --> T["Tempo Trace"] -->|"Trace ID"| L["Loki Logs"]
 ```
 
 이 구조가 Observability를 구축할 때 상당히 중요한 패턴입니다.
@@ -574,21 +620,18 @@ Context Propagation
 
 그리고 Kubernetes + MSA 환경에서는 다음 구성이 많이 사용됩니다.
 
-```
-Spring Boot / NestJS
-        │
-        ▼
-OpenTelemetry
-        │
-        ▼
-OpenTelemetry Collector
-        │
-        ├── Prometheus → Metrics
-        ├── Loki       → Logs
-        └── Tempo      → Traces
-                         │
-                         ▼
-                       Grafana
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Spring Boot / NestJS"] --> O["OpenTelemetry"] --> C["OpenTelemetry Collector"]
+    C --> P["Prometheus → Metrics"]
+    C --> L["Loki → Logs"]
+    C --> T["Tempo → Traces"] --> G["Grafana"]
 ```
 
 즉 첫 번째 답변의 구조와 설명은 그대로 두고, 전직장 관련 `im-*` 예시만 모두 일반적인 `User / Order / Payment / Notification Service` 예시로 바꿨습니다.

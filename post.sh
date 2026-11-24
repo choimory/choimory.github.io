@@ -43,6 +43,7 @@ FILE_CONTENT=$(cat <<EOF
 title: "${POST_TITLE}"
 date: ${FULL_DATETIME}
 toc: true
+mermaid: true
 categories: []
 tags: []
 ---

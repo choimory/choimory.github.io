@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Tailscale 개념 정리"
 date: 2026-11-04T00:00:00
 toc: true
@@ -43,19 +44,33 @@ Tailscale의 핵심은 단순한 VPN 연결을 넘어 "네트워크 구성, 내�
 
 일반적인 중앙 집중형 VPN:
 
-```
-Client A → VPN Server → Client B
-          (중앙 경유)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Client A"]
+    N1["VPN Server: 중앙 경유"]
+    N2["Client B"]
+    N0 --> N1 --> N2
 ```
 
 Tailscale Mesh VPN:
 
-```
-           Control Plane
-          (인증·연결 조정)
-             /       \
-          Node A ←→ Node B
-              직접 P2P
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Control Plane: 인증·연결 조정"] --- A["Node A"]
+    C --- B["Node B"]
+    A <-->|"직접 P2P"| B
 ```
 
 개념도: Tailscale의 Control Plane은 인증과 네트워크 정보를 조정하지만, 직접 연결이 가능한 경우 실제 데이터는 이를 경유하지 않습니다.
@@ -95,13 +110,19 @@ Tailnet은 "Tailscale을 통해 구성되는 논리적인 사설 네트워크"�
 
 예를 들어 다음과 같이 구성할 수 있습니다.
 
-```
-Tailnet: example.ts.net
-  ├── Laptop      100.101.1.1
-  ├── Dev Server  100.101.1.2
-  └── Home NAS    100.101.1.3
-
-암호화된 Tailnet 내부 통신
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph T["Tailnet: example.ts.net — 암호화된 내부 통신"]
+        L["Laptop: 100.101.1.1"]
+        D["Dev Server: 100.101.1.2"]
+        H["Home NAS: 100.101.1.3"]
+    end
 ```
 
 물리적으로 서로 다른 네트워크에 존재하더라도 같은 Tailnet에 속한 장치들은 접근 정책이 허용하는 범위에서 통신할 수 있습니다.
@@ -183,18 +204,15 @@ http://127.0.0.1:3000
 
 Serve를 이용하면 이 로컬 서비스를 Tailnet 내부 장치들이 사용할 수 있도록 HTTPS 프록시 형태로 제공할 수 있습니다.
 
-```
-Tailnet 내부 Laptop
-        |
-        | HTTPS / WireGuard 기반 내부 접근
-        v
-  Tailscale Serve
-  dev-server.example.ts.net
-        |
-        | Reverse Proxy
-        v
-      Local App
-    127.0.0.1:3000
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["Tailnet 내부 Laptop"] -->|"HTTPS / WireGuard 기반 내부 접근"| S["Tailscale Serve<br/>dev-server.example.ts.net"] -->|"Reverse Proxy"| A["Local App<br/>127.0.0.1:3000"]
 ```
 
 ### 4.1 주요 특징
@@ -232,15 +250,17 @@ Serve와 가장 큰 차이는 서비스를 사용할 수 있는 대상입니다.
 - Serve: Tailnet 접근 권한이 있는 장치
 - Funnel: Tailscale을 설치하지 않은 일반 인터넷 사용자도 접근 가능
 
-```
-일반 인터넷 사용자      Tailnet 사용자
-          \               /
-            Tailscale Funnel
-           Public HTTPS Endpoint
-                   |
-                   v
-                Local App
-             127.0.0.1:3000
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    I["일반 인터넷 사용자"] --> F["Tailscale Funnel<br/>Public HTTPS Endpoint"]
+    T["Tailnet 사용자"] --> F
+    F --> A["Local App<br/>127.0.0.1:3000"]
 ```
 
 ### 5.1 주요 특징
@@ -313,18 +333,19 @@ Subnet Router는 "Tailscale이 설치되지 않은 장치가 속한 사설 네�
 
 이때 Subnet Router를 사용합니다.
 
-```
-Tailnet
-  |
-  +-- Laptop (100.101.1.1)
-  |
-  +-- Subnet Router (100.101.1.2)
-          |
-          +-- 192.168.10.0/24
-                |
-                +-- DB Server (192.168.10.10)
-                +-- NAS       (192.168.10.20)
-                +-- VM        (192.168.10.30)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    T["Tailnet"] --- L["Laptop: 100.101.1.1"]
+    T --- S["Subnet Router: 100.101.1.2"] --> N["192.168.10.0/24"]
+    N --> D["DB Server: 192.168.10.10"]
+    N --> A["NAS: 192.168.10.20"]
+    N --> V["VM: 192.168.10.30"]
 ```
 
 Subnet Router가 `192.168.10.0/24` 네트워크의 경로를 Tailnet에 광고하면, 접근 권한과 라우팅 설정이 허용된 다른 장치에서 해당 네트워크에 접근할 수 있습니다.
@@ -351,16 +372,15 @@ Subnet Router가 특정 사설 네트워크에 접근하기 위한 기능이라�
 
 예를 들어 다음과 같은 구조입니다.
 
-```
-Laptop
-  |
-  | WireGuard VPN
-  v
-Exit Node (Home Server)
-  |
-  | Internet
-  v
-google.com / github.com / ...
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["Laptop"] -->|"WireGuard VPN"| E["Exit Node: Home Server"] -->|"Internet"| G["google.com / github.com / ..."]
 ```
 
 Laptop에서 Exit Node를 활성화하면 일반적인 인터넷 트래픽도 Home Server를 경유할 수 있습니다.
@@ -409,12 +429,20 @@ Tailscale은 NAT 유형과 네트워크 연결 정보를 확인하고, 가능한
 
 DERP(Designated Encrypted Relay for Packets)는 직접 연결이 어려울 때 사용하는 중계 시스템입니다.
 
-```
-직접 연결 가능한 경우
-Node A <------ P2P ------> Node B
-
-직접 연결이 불가능한 경우
-Node A <----> DERP <----> Node B
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph Direct["직접 연결 가능한 경우"]
+        A["Node A"] <-->|"P2P"| B["Node B"]
+    end
+    subgraph Relay["직접 연결 불가능한 경우"]
+        C["Node A"] <--> D["DERP"] <--> E["Node B"]
+    end
 ```
 
 DERP는 WireGuard로 암호화된 트래픽을 중계하며, 일반적으로 해당 트래픽을 복호화하지 않습니다.
@@ -609,39 +637,26 @@ Tailscale을 DevOps 인프라에 적용하면 외부에 직접 노출하지 않�
 
 예를 들어 다음과 같은 구성이 가능합니다.
 
-```
-Developer Laptop
-       |
-       | Tailscale VPN
-       |
-       v
-     Tailnet
-       |
-       +-- Dev Server
-       |      |
-       |      +-- SSH
-       |      +-- Docker
-       |      +-- Kubernetes
-       |
-       +-- Monitoring Server
-       |      |
-       |      +-- Serve
-       |            |
-       |            +-- Grafana
-       |            +-- Prometheus UI
-       |
-       +-- Network Gateway
-       |      |
-       |      +-- Subnet Router
-       |            |
-       |            +-- Private Subnet
-       |            +-- Database
-       |
-       +-- Webhook Server
-              |
-              +-- Funnel
-                    |
-                    +-- External Webhook
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["Developer Laptop"] -->|"Tailscale VPN"| T["Tailnet"]
+    T --> D["Dev Server"]
+    D --- S["SSH"]
+    D --- O["Docker"]
+    D --- K["Kubernetes"]
+    T --> M["Monitoring Server"] --> V["Serve"]
+    V --> G["Grafana"]
+    V --> P["Prometheus UI"]
+    T --> N["Network Gateway"] --> R["Subnet Router"]
+    R --> B["Private Subnet"]
+    R --> Q["Database"]
+    T --> W["Webhook Server"] --> F["Funnel"] --> E["External Webhook"]
 ```
 
 이러한 구성을 적용하면 기능별로 네트워크 접근 방식을 구분할 수 있습니다.

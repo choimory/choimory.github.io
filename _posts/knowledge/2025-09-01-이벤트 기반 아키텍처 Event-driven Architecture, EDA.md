@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "이벤트 기반 아키텍처 Event-driven Architecture, EDA"
 date: 2025-09-01T00:00:00
 toc: true
@@ -377,9 +378,20 @@ handleOrderCreated(@Payload() message: any) {
 
 - **회원가입**, **주문생성**, **결제완료** 등 → 요청을 받고 "처리 요청"만 Kafka로 넘기고, 실제 DB 저장/후속 처리는 백그라운드에서
 
-```
-POST /orders → emit 'order.created' → 바로 응답 (202 Accepted)
-               → worker가 DB 저장하고 알림도 보내고 로깅도 하고
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["POST /orders"] --> B["emit order.created"]
+    B --> C["바로 응답: 202 Accepted"]
+    B --> D["Worker"]
+    D --> E["DB 저장"]
+    D --> F["알림"]
+    D --> G["로깅"]
 ```
 
 ## 반대로 조회 API는?

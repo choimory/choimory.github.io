@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "VPN(Virtual Private Network)이란?"
 date: 2026-10-26T00:00:00
 toc: true
@@ -24,21 +25,37 @@ VPN은 단순히 IP 주소를 변경하는 기술이 아니라 "네트워크 간
 
 일반적으로 기업 내부 네트워크는 외부 인터넷과 분리되어 있습니다.
 
-```
-회사 내부 네트워크
-192.168.10.0/24
-
-├── 개발 서버: 192.168.10.10
-├── DB 서버: 192.168.10.20
-└── 모니터링 서버: 192.168.10.30
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    R["회사 내부 네트워크: 192.168.10.0/24"]
+    R --> N0["개발 서버: 192.168.10.10"]
+    R --> N1["DB 서버: 192.168.10.20"]
+    R --> N2["모니터링 서버: 192.168.10.30"]
 ```
 
 `192.168.x.x`는 사설 IP이며 인터넷에서 직접 라우팅되지 않으므로 외부에서 내부 서버에 직접 접근할 수 없습니다.
 
 ### 1.2 외부에서 내부 서버에 접근하려면?
 
-```
-집의 개발자 → 인터넷 → 회사 네트워크 → 개발 서버(192.168.10.10)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["집의 개발자"]
+    N1["인터넷"]
+    N2["회사 네트워크"]
+    N3["개발 서버: 192.168.10.10"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 외부 인터넷에는 회사 내부 사설 네트워크로 향하는 경로가 일반적으로 존재하지 않습니다.
@@ -55,27 +72,26 @@ VPN은 터널링, 암호화, 인증을 기반으로 동작합니다.
 
 터널링은 "하나의 네트워크 패킷을 다른 네트워크 패킷 안에 캡슐화하여 전달하는 기술"입니다.
 
-```
-VPN 클라이언트 ── 인터넷 / 암호화된 VPN 터널 ── VPN 서버
-                                                   │
-                                                   ▼
-                                         내부 개발 서버
-                                         192.168.10.10
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["VPN 클라이언트"] ---|"인터넷 / 암호화된 VPN 터널"| V["VPN 서버"] --> D["내부 개발 서버: 192.168.10.10"]
 ```
 
-```
-원본 IP 패킷
-┌──────────────────────────┐
-│ 목적지: 192.168.10.10    │
-│ 데이터: SSH 요청         │
-└──────────────────────────┘
-            ↓ 캡슐화 및 암호화
-외부 전송 패킷
-┌──────────────────────────┐
-│ 출발지: 개발자 공인 IP   │
-│ 목적지: VPN 서버 공인 IP │
-│ 암호화된 원본 IP 패킷    │
-└──────────────────────────┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["원본 IP 패킷<br/>목적지: 192.168.10.10<br/>데이터: SSH 요청"] -->|"캡슐화 및 암호화"| B["외부 전송 패킷<br/>출발지: 개발자 공인 IP<br/>목적지: VPN 서버 공인 IP<br/>암호화된 원본 IP 패킷"]
 ```
 
 VPN 서버는 수신한 패킷을 복호화하고 캡슐화 해제(Decapsulation)한 뒤 내부 네트워크로 전달합니다.
@@ -100,11 +116,18 @@ VPN 인증 이후에도 방화벽, ACL, 사용자 권한을 통해 접근 가능
 
 Remote Access VPN은 "개별 사용자 또는 장치가 외부에서 사설 네트워크에 접속하기 위한 VPN"입니다.
 
-```
-개발자 노트북 → 인터넷 → VPN 서버 → 회사 내부 네트워크
-                                      ├── 개발 서버
-                                      ├── DB 서버
-                                      └── Kubernetes Cluster
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["개발자 노트북"] --> I["인터넷"] --> V["VPN 서버"] --> C["회사 내부 네트워크"]
+    C --> S["개발 서버"]
+    C --> B["DB 서버"]
+    C --> K["Kubernetes Cluster"]
 ```
 
 재택근무, 사내 서버 접근, Kubernetes API 접근, 원격 서버 관리에 활용합니다.
@@ -119,14 +142,16 @@ VPN 연결만으로 접근이 보장되는 것은 아니며 라우팅 경로와 
 
 Site-to-Site VPN은 "서로 다른 두 네트워크를 VPN 터널을 통해 연결하는 방식"입니다. 사용자가 아니라 VPN 게이트웨이끼리 연결됩니다.
 
-```
-서울 본사 (192.168.10.0/24)
-       │
-VPN Gateway A
-       │ 암호화된 VPN 터널
-VPN Gateway B
-       │
-부산 지사 (192.168.20.0/24)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    S["서울 본사: 192.168.10.0/24"] --- A["VPN Gateway A"]
+    A ---|"암호화된 VPN 터널"| B["VPN Gateway B"] --- C["부산 지사: 192.168.20.0/24"]
 ```
 
 본사와 지사, 데이터센터, 온프레미스와 클라우드, 서로 다른 클라우드 네트워크 연결에 사용합니다.
@@ -160,14 +185,15 @@ VPN 인터페이스: 10.8.0.1
 
 203.0.113.10은 설명을 위한 문서용 예시 IP입니다.
 
-```
-개발자 노트북(10.8.0.2)
-       │ 목적지: 192.168.10.10
-       ▼
-VPN 터널 → VPN 서버(10.8.0.1)
-                    │ 내부망 라우팅
-                    ▼
-             개발 서버(192.168.10.10)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["개발자 노트북: 10.8.0.2"] -->|"목적지: 192.168.10.10"| T["VPN 터널"] --> V["VPN 서버: 10.8.0.1"] -->|"내부망 라우팅"| D["개발 서버: 192.168.10.10"]
 ```
 
 VPN을 연결한다고 해서 모든 트래픽이 자동으로 VPN을 통과하는 것은 아닙니다. 트래픽이 어느 인터페이스를 통과하는지는 라우팅 테이블에 따라 결정됩니다.
@@ -180,9 +206,17 @@ VPN을 연결한다고 해서 모든 트래픽이 자동으로 VPN을 통과하�
 
 Full Tunnel은 "인터넷을 포함한 일반적인 외부 트래픽을 VPN 서버를 통해 전달하는 방식"입니다.
 
-```
-개발자 노트북 → VPN 서버 ┬→ 회사 내부 서버
-                        └→ 일반 인터넷 (google.com)
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["개발자 노트북"] --> V["VPN 서버"]
+    V --> C["회사 내부 서버"]
+    V --> I["일반 인터넷: google.com"]
 ```
 
 일반적으로 기본 경로(Default Route)가 VPN 인터페이스를 사용하도록 변경됩니다.
@@ -193,9 +227,16 @@ Full Tunnel은 "인터넷을 포함한 일반적인 외부 트래픽을 VPN 서�
 
 Split Tunnel은 "특정 네트워크로 향하는 트래픽만 VPN을 통해 전달하는 방식"입니다.
 
-```
-개발자 노트북 ┬→ 192.168.10.0/24 → VPN → 회사 내부
-              └→ 일반 인터넷 → google.com
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    L["개발자 노트북"] --> N["192.168.10.0/24"] --> V["VPN"] --> C["회사 내부"]
+    L --> I["일반 인터넷"] --> G["google.com"]
 ```
 
 ```
@@ -279,18 +320,20 @@ Tailscale은 WireGuard를 활용하여 장치 간 VPN 연결을 쉽게 구성하
 
 Kubernetes Control Plane의 API Server는 클러스터를 관리하는 진입점입니다.
 
-```
-개발자 노트북
-      │
-      ▼
-VPN → 내부 네트워크
-            │
-            ▼
-Kubernetes API Server
-192.168.10.100:6443
-            │
-            ▼
-Kubernetes Cluster
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["개발자 노트북"]
+    N1["VPN"]
+    N2["내부 네트워크"]
+    N3["Kubernetes API Server<br/>192.168.10.100:6443"]
+    N4["Kubernetes Cluster"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 외부 개발자가 API Server에 직접 접근할 수 없도록 구성하고 VPN을 통해 접근하게 할 수 있습니다.
@@ -306,32 +349,37 @@ VPN은 네트워크 접근 경로를 제공할 뿐입니다. Kubernetes API Serv
 
 운영 환경에서는 Grafana, Prometheus, Argo CD, Jenkins, 내부 Git 서버, 데이터베이스 관리 인터페이스 등을 외부 인터넷에 직접 공개하지 않는 경우가 많습니다.
 
-```
-외부 개발자 → VPN → Private Network
-                       ├── Argo CD
-                       ├── Grafana
-                       ├── Jenkins
-                       └── Kubernetes API
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["외부 개발자"] --> V["VPN"] --> P["Private Network"]
+    P --> A["Argo CD"]
+    P --> G["Grafana"]
+    P --> J["Jenkins"]
+    P --> K["Kubernetes API"]
 ```
 
 이 구조는 불필요한 외부 공격 표면을 줄이는 데 도움이 됩니다. 하지만 VPN 접속과 별개로 서비스별 인증과 네트워크 접근 제어도 적용해야 합니다.
 
 ### 7.3 온프레미스와 AWS 연결
 
-```
-온프레미스 (192.168.10.0/24)
-        │
-        ▼
-VPN Gateway
-        │ IPsec VPN
-        ▼
-AWS Site-to-Site VPN
-        │
-        ▼
-AWS VPC (10.0.0.0/16)
-        ├── EC2
-        ├── RDS
-        └── EKS
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    O["온프레미스: 192.168.10.0/24"] --> G["VPN Gateway"] -->|"IPsec VPN"| S["AWS Site-to-Site VPN"] --> V["AWS VPC: 10.0.0.0/16"]
+    V --> E["EC2"]
+    V --> R["RDS"]
+    V --> K["EKS"]
 ```
 
 온프레미스 서버와 AWS VPC 내부 리소스가 사설 주소로 통신할 수 있습니다.

@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "비관적 락(Pessimistic Lock)과 낙관적 락(Optimistic Lock)"
 date: 2026-07-21T00:00:00
 toc: true
@@ -36,25 +37,21 @@ tags:
 
 ### 동작 과정
 
-```
-사용자 A
-SELECT ... FOR UPDATE
-
-      ↓
-DB Row Lock 획득
-
-      ↓
-사용자 B
-같은 데이터 수정 시도
-
-      ↓
-대기(Blocking)
-
-      ↓
-A Commit
-
-      ↓
-B 실행
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["사용자 A: SELECT ... FOR UPDATE"]
+    N1["DB Row Lock 획득"]
+    N2["사용자 B: 같은 데이터 수정 시도"]
+    N3["대기: Blocking"]
+    N4["A Commit"]
+    N5["B 실행"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 예시
@@ -144,25 +141,21 @@ AND version=3;
 
 ### 동작 과정
 
-```
-A 조회(version=3)
-
-B 조회(version=3)
-
-A 수정
-version=4
-
-B 수정 시도
-
-WHERE version=3
-
-↓
-
-0 rows
-
-↓
-
-충돌 감지
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["A 조회: version=3"]
+    N1["B 조회: version=3"]
+    N2["A 수정: version=4"]
+    N3["B 수정 시도: WHERE version=3"]
+    N4["0 rows"]
+    N5["충돌 감지"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 ### 장점
@@ -241,49 +234,43 @@ JPA가 자동으로 `WHERE version = ?` 조건을 추가합니다.
 
 ### 비관적 락
 
-```
-A 구매 시작
-↓
-상품 Lock
-↓
-B 구매
-↓
-대기
-↓
-A 구매 완료
-↓
-B 실행
-↓
-재고 없음
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["A 구매 시작"]
+    N1["상품 Lock"]
+    N2["B 구매"]
+    N3["대기"]
+    N4["A 구매 완료"]
+    N5["B 실행"]
+    N6["재고 없음"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5 --> N6
 ```
 
 항상 순서대로 처리됩니다.
 
 ### 낙관적 락
 
-```
-A 조회 (재고 1, version=5)
-
-B 조회 (재고 1, version=5)
-
-↓
-
-A 구매 성공
-version=6
-
-↓
-
-B 구매
-
-WHERE version=5
-
-↓
-
-실패
-
-↓
-
-재시도 또는 "품절"
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["A 조회: 재고 1 / version=5"]
+    N1["B 조회: 재고 1 / version=5"]
+    N2["A 구매 성공: version=6"]
+    N3["B 구매: WHERE version=5"]
+    N4["실패"]
+    N5["재시도 또는 품절"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 잠그지는 않지만 충돌을 감지하여 잘못된 업데이트를 막습니다.

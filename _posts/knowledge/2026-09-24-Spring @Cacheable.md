@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Spring @Cacheable"
 date: 2026-09-24T00:00:00
 toc: true
@@ -23,26 +24,17 @@ public UserDto getUser(Long id) {
 
 동작은 다음과 같습니다.
 
-```
-getUser(1) 호출
-    ↓
-캐시에 users::1 존재?
-    ↓
-없음
-    ↓
-메서드 실행 → DB 조회
-    ↓
-결과 캐시에 저장
-    ↓
-반환
-
-getUser(1) 다시 호출
-    ↓
-캐시에 users::1 존재
-    ↓
-메서드 실행 안 함
-    ↓
-캐시 값 바로 반환
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["getUser(1) 호출"] --> C{"캐시에 users::1 존재?"}
+    C -->|"없음: 최초 호출"| M["메서드 실행"] --> D["DB 조회"] --> S["결과 캐시에 저장"] --> R["반환"]
+    C -->|"존재: 다시 호출"| H["메서드 실행 안 함"] --> V["캐시 값 바로 반환"]
 ```
 
 ---
@@ -252,13 +244,17 @@ public UserDto findById(Long id) {
 
 즉 다음과 같습니다.
 
-```
-DB 조회
- ↓
-result == null?
- ↓
-YES → 캐시에 저장하지 않음
-NO  → 캐시에 저장
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    D["DB 조회"] --> C{"result == null?"}
+    C -->|"YES"| N["캐시에 저장하지 않음"]
+    C -->|"NO"| S["캐시에 저장"]
 ```
 
 ---
@@ -280,34 +276,28 @@ public UserDto findById(Long id) {
 
 첫 번째 요청은 다음과 같습니다.
 
-```
-Controller
-    ↓
-Service.findById(1)
-    ↓
-Cache 확인
-    ↓ miss
-Repository
-    ↓
-DB
-    ↓
-UserDto 생성
-    ↓
-Cache 저장
-    ↓
-Controller
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Controller"] --> S["Service.findById(1)"] --> K["Cache 확인"] -->|"miss"| R["Repository"] --> D["DB"] --> U["UserDto 생성"] --> W["Cache 저장"] --> O["Controller"]
 ```
 
 두 번째부터는 다음과 같습니다.
 
-```
-Controller
-    ↓
-Service.findById(1)
-    ↓
-Cache 확인
-    ↓ hit
-UserDto 반환
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["Controller"] --> S["Service.findById(1)"] --> K["Cache 확인"] -->|"hit"| U["UserDto 반환"]
 ```
 
 `Repository`와 DB까지 내려가지 않습니다.
@@ -320,14 +310,19 @@ UserDto 반환
 
 개념적으로 실제 구조는 다음에 가깝습니다.
 
-```
-Controller
-    ↓
-UserService Proxy
-    ↓
-CacheInterceptor
-    ↓
-실제 UserService
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Controller"]
+    N1["UserService Proxy"]
+    N2["CacheInterceptor"]
+    N3["실제 UserService"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 Proxy가 메서드 실행 전에 캐시를 확인하는 것입니다.
@@ -351,10 +346,17 @@ public class UserService {
 
 위 `process()` → `findById()` 호출은 일반적으로 Proxy를 거치지 않습니다.
 
-```
-UserService.process()
-    ↓
-this.findById()
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["UserService.process()"]
+    N1["this.findById()"]
+    N0 --> N1
 ```
 
 따라서 `@Cacheable`이 동작하지 않습니다.
@@ -429,18 +431,21 @@ public void updateUser(Long id, UpdateUserRequest request) {
 
 흐름은 다음과 같습니다.
 
-```
-사용자 수정
-    ↓
-DB 변경
-    ↓
-users::1 캐시 삭제
-    ↓
-다음 조회
-    ↓
-DB 다시 조회
-    ↓
-최신 값 캐시 저장
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["사용자 수정"]
+    N1["DB 변경"]
+    N2["users::1 캐시 삭제"]
+    N3["다음 조회"]
+    N4["DB 다시 조회"]
+    N5["최신 값 캐시 저장"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5
 ```
 
 삭제할 때도 동일합니다.
@@ -495,14 +500,19 @@ public UserDto updateUser(
 
 Spring Cache는 "추상화"입니다.
 
-```
-Application
-    ↓
-Spring Cache abstraction
-    ↓
-CacheManager
-    ↓
-실제 Cache 구현
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Application"]
+    N1["Spring Cache abstraction"]
+    N2["CacheManager"]
+    N3["실제 Cache 구현"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 구현체로 여러 가지를 사용할 수 있습니다.
@@ -542,10 +552,17 @@ users::1
 
 따라서 Kubernetes나 다중 인스턴스 환경에서는 Redis 같은 분산 캐시를 많이 사용합니다.
 
-```
-Pod A ─┐
-Pod B ─┼── Redis
-Pod C ─┘
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["Pod A"] --- R["Redis"]
+    B["Pod B"] --- R
+    C["Pod C"] --- R
 ```
 
 ---
@@ -618,10 +635,20 @@ users 캐시 TTL = 10분
 
 이면
 
-```
-11:00 캐시 생성
-11:10 캐시 만료
-11:11 요청 → DB 조회 → 캐시 재생성
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["11:00 캐시 생성"]
+    N1["11:10 캐시 만료"]
+    N2["11:11 요청"]
+    N3["DB 조회"]
+    N4["캐시 재생성"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 Redis에서는 `RedisCacheManager`를 통해 설정할 수 있습니다.
@@ -691,15 +718,23 @@ public void updateUser(
 
 이 방식은 `"Cache Aside"` 패턴과 비슷한 형태가 됩니다.
 
-```
-조회
-Cache → 없으면 DB → Cache 저장
-
-수정
-DB 수정 → Cache 제거
-
-다음 조회
-DB → 최신 값 → Cache 저장
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    subgraph Read["조회"]
+        C["Cache"] -->|"없음"| D["DB"] --> S["Cache 저장"]
+    end
+    subgraph Update["수정"]
+        U["DB 수정"] --> E["Cache 제거"]
+    end
+    subgraph Next["다음 조회"]
+        N["DB"] --> V["최신 값"] --> W["Cache 저장"]
+    end
 ```
 
 Spring에서 가장 이해하기 쉽고 관리하기도 편한 방식입니다.
@@ -735,14 +770,19 @@ DB 조회 비용 높음
 
 특히 Spring + JPA에서는 다음 세 가지를 같이 생각해야 합니다.
 
-```
-DB 데이터
-    ↓
-JPA Persistence Context
-    ↓
-Spring Cache
-    ↓
-Redis/Caffeine
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["DB 데이터"]
+    N1["JPA Persistence Context"]
+    N2["Spring Cache"]
+    N3["Redis / Caffeine"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 JPA 1차 캐시와 `@Cacheable`의 캐시는 서로 다른 개념입니다.
@@ -753,20 +793,17 @@ JPA 1차 캐시와 `@Cacheable`의 캐시는 서로 다른 개념입니다.
 
 `@Cacheable`은 다음 원리입니다.
 
-```
-@Cacheable
-    ↓
-캐시 확인
-    ↓
-HIT ───→ 캐시 값 반환
-    ↓ MISS
-메서드 실행
-    ↓
-DB 조회
-    ↓
-결과 Cache 저장
-    ↓
-반환
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["@Cacheable"] --> B{"캐시 확인"}
+    B -->|"HIT"| C["캐시 값 반환"]
+    B -->|"MISS"| D["메서드 실행"] --> E["DB 조회"] --> F["결과 Cache 저장"] --> G["반환"]
 ```
 
 핵심만 정리하면:

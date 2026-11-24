@@ -1,4 +1,5 @@
 ---
+mermaid: true
 title: "Kubernetes에서 민감한 환경변수 관리 방법"
 date: 2026-09-10T00:00:00
 toc: true
@@ -14,24 +15,15 @@ tags:
 
 프로젝트에서 DB 비밀번호, JWT Secret, API Key 같은 값을 제거하려는 목적이라면 단순히 `.env` → Kubernetes Secret으로 옮기는 것보다 한 단계 더 나아가 다음 구조를 만드는 것이 좋습니다.
 
-```
-Git / Source Code
-        │
-        │ 비밀값 없음
-        ▼
-Kubernetes Manifest
-        │
-        │ "어떤 Secret을 사용할지"만 정의
-        ▼
-Secret Management System
-        │
-        ├─ DB_PASSWORD
-        ├─ JWT_SECRET
-        ├─ API_KEY
-        └─ ...
-        │
-        ▼
-      Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    G["Git / Source Code"] -->|"비밀값 없음"| M["Kubernetes Manifest"] -->|"어떤 Secret을 사용할지만 정의"| S["Secret Management System<br/>DB_PASSWORD / JWT_SECRET / API_KEY / ..."] --> P["Pod"]
 ```
 
 현재처럼 Kubernetes + Argo CD + GitOps 환경이라면 크게 다음 방법들을 고려할 수 있습니다.
@@ -42,26 +34,15 @@ Secret Management System
 
 가장 제대로 된 Secret 관리 시스템 중 하나입니다.
 
-```
-Git
- │
- │ secret path만 기록
- ▼
-Argo CD
- │
- ▼
-Kubernetes
- │
- │ ServiceAccount 인증
- ▼
-Vault
- │
- ├─ DB_PASSWORD
- ├─ JWT_SECRET
- └─ API_KEY
- │
- ▼
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    G["Git"] -->|"secret path만 기록"| A["Argo CD"] --> K["Kubernetes"] -->|"ServiceAccount 인증"| V["Vault<br/>DB_PASSWORD / JWT_SECRET / API_KEY"] --> P["Pod"]
 ```
 
 Vault는 Kubernetes ServiceAccount를 이용하여 Pod를 인증할 수 있고, Vault Agent Injector를 이용하면 애플리케이션이 Vault API를 직접 호출하지 않아도 Secret을 파일 형태로 전달할 수 있습니다. (developer.hashicorp.com)
@@ -127,31 +108,33 @@ Monitoring
 
 개인적으로 "Kubernetes Secret 자체를 정말 사용하고 싶지 않다"면 상당히 좋은 방식입니다.
 
-```
-Vault
-  │
-  ▼
-Secrets Store CSI Driver
-  │
-  ▼
-Pod Volume
-
-/run/secrets/
- ├─ DB_PASSWORD
- ├─ JWT_SECRET
- └─ API_KEY
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    V["Vault"] --> C["Secrets Store CSI Driver"] --> P["Pod Volume<br/>/run/secrets/<br/>DB_PASSWORD / JWT_SECRET / API_KEY"]
 ```
 
 Secret을 Kubernetes Secret으로 생성하지 않고 Pod의 ephemeral volume으로 직접 Mount할 수 있습니다. Vault 공식 문서에서도 CSI Provider가 Pod ServiceAccount로 Vault에 인증하고 Secret을 volume으로 제공하는 방식을 지원합니다. (developer.hashicorp.com)
 
 즉:
 
-```
-Vault
- ↓
-CSI
- ↓
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Vault"]
+    N1["CSI"]
+    N2["Pod"]
+    N0 --> N1 --> N2
 ```
 
 이고 중간에
@@ -168,10 +151,17 @@ Kubernetes Secret
 
 반면 CSI 방식은:
 
-```
-Vault
- ↓
-Pod ephemeral volume
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Vault"]
+    N1["Pod ephemeral volume"]
+    N0 --> N1
 ```
 
 으로 가져올 수 있습니다. Vault의 Kubernetes 통합 비교에서도 CSI Provider는 Secret을 ephemeral volume으로 제공하는 방식으로 구분됩니다. (developer.hashicorp.com)
@@ -180,12 +170,18 @@ Pod ephemeral volume
 
 오히려 이 방식을 꽤 선호합니다.
 
-```
-Vault
-    ↓
-Secrets Store CSI
-    ↓
-Pod File
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Vault"]
+    N1["Secrets Store CSI"]
+    N2["Pod File"]
+    N0 --> N1 --> N2
 ```
 
 ---
@@ -194,22 +190,20 @@ Pod File
 
 Kubernetes에서는 굉장히 많이 사용하는 구조입니다.
 
-```
-AWS Secrets Manager
-Google Secret Manager
-Azure Key Vault
-Vault
-1Password
-etc...
-        │
-        ▼
-External Secrets Operator
-        │
-        ▼
-Kubernetes Secret
-        │
-        ▼
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    A["AWS Secrets Manager"] --> E["External Secrets Operator"]
+    G["Google Secret Manager"] --> E
+    Z["Azure Key Vault"] --> E
+    V["Vault"] --> E
+    O["1Password / etc..."] --> E
+    E --> S["Kubernetes Secret"] --> P["Pod"]
 ```
 
 External Secrets Operator는 `ExternalSecret`, `SecretStore`, `ClusterSecretStore` 같은 CRD를 제공하고 외부 Secret Store의 값을 Kubernetes로 동기화합니다. (external-secrets.io)
@@ -247,28 +241,33 @@ password = X@!#adfaf...
 
 현재 사용하는 구조가:
 
-```
-Helm
- ↓
-Argo CD
- ↓
-Application
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Helm"]
+    N1["Argo CD"]
+    N2["Application"]
+    N0 --> N1 --> N2
 ```
 
 이라면 다음처럼 만들 수 있습니다.
 
-```
-Helm
- ↓
-Argo CD
- ├─ External Secrets Operator
- └─ Application
-       │
-       ▼
- ExternalSecret
-       │
-       ▼
-     Vault
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    H["Helm"] --> A["Argo CD"]
+    A --> E["External Secrets Operator"]
+    A --> P["Application"] --> S["ExternalSecret"] --> V["Vault"]
 ```
 
 Argo CD에서는 "Secret 값"이 아니라:
@@ -311,38 +310,51 @@ AWS Secrets Manager
 
 AWS IAM으로:
 
-```
-im-cms Pod
-   │
-   └── /prod/im-cms/* 만 접근
-
-api-gateway Pod
-   │
-   └── /prod/api-gateway/* 만 접근
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    C["im-cms Pod"] -->|"이 경로만 접근"| P["/prod/im-cms/*"]
+    A["api-gateway Pod"] -->|"이 경로만 접근"| Q["/prod/api-gateway/*"]
 ```
 
 처럼 권한을 분리할 수 있습니다.
 
 그리고:
 
-```
-AWS Secrets Manager
-        ↓
-CSI Driver
-        ↓
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["AWS Secrets Manager"]
+    N1["CSI Driver"]
+    N2["Pod"]
+    N0 --> N1 --> N2
 ```
 
 또는
 
-```
-AWS Secrets Manager
-        ↓
-External Secrets Operator
-        ↓
-Kubernetes Secret
-        ↓
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["AWS Secrets Manager"]
+    N1["External Secrets Operator"]
+    N2["Kubernetes Secret"]
+    N3["Pod"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 구조로 사용합니다.
@@ -392,14 +404,19 @@ GitOps Repo
 
 Argo CD 배포 시:
 
-```
-Git
- ↓
-SOPS decrypt
- ↓
-Argo CD
- ↓
-Kubernetes
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Git"]
+    N1["SOPS decrypt"]
+    N2["Argo CD"]
+    N3["Kubernetes"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 형태가 됩니다.
@@ -440,30 +457,22 @@ SOPS > Vault
 
 SOPS와 비슷한 GitOps용 Secret 관리 방식입니다.
 
-```
-Secret
-
-DB_PASSWORD=1234
-        │
-        ▼
-kubeseal
-        │
-        ▼
-SealedSecret
-
-AgBy8....
-        │
-        ▼
-Git
-        │
-        ▼
-Kubernetes
-        │
-        ▼
-Sealed Secrets Controller
-        │
-        ▼
-Secret
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Secret<br/>DB_PASSWORD=1234"]
+    N1["kubeseal"]
+    N2["SealedSecret<br/>AgBy8...."]
+    N3["Git"]
+    N4["Kubernetes"]
+    N5["Sealed Secrets Controller"]
+    N6["Secret"]
+    N0 --> N1 --> N2 --> N3 --> N4 --> N5 --> N6
 ```
 
 Git에는 암호화된 값만 존재합니다.
@@ -504,17 +513,21 @@ PAYMENT_API_KEY
 
 역할을 나누는 것이 좋습니다.
 
-```
-Jenkins Credentials
- ├─ Git Credential
- ├─ Registry Credential
- └─ CI Token
-
-Vault
- ├─ DB Credential
- ├─ Redis Credential
- ├─ JWT Secret
- └─ External API Key
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    J["Jenkins Credentials"] --- G["Git Credential"]
+    J --- R["Registry Credential"]
+    J --- C["CI Token"]
+    V["Vault"] --- D["DB Credential"]
+    V --- E["Redis Credential"]
+    V --- T["JWT Secret"]
+    V --- A["External API Key"]
 ```
 
 ---
@@ -595,32 +608,20 @@ Kubernetes와 Argo CD를 이용해 GitOps 방식으로 인프라와 애플리케
 
 ### 1순위: 보안성과 완성도를 우선할 경우
 
-```
-       GitOps Repository
-              │
-     Secret 값은 없음
-              │
-              ▼
-           Argo CD
-              │
-              ▼
-         Kubernetes
-              │
-      ServiceAccount
-              │
-              ▼
-       HashiCorp Vault
-        /             \
-im-cms/db         api-gateway/jwt
-    │                    │
-    └──────┬─────────────┘
-           ▼
-  Secrets Store CSI
-           │
-           ▼
-          Pod
-           │
-   /run/secrets/*
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    G["GitOps Repository"] -->|"Secret 값 없음"| A["Argo CD"] --> K["Kubernetes"] -->|"ServiceAccount"| V["HashiCorp Vault"]
+    V --> I["im-cms/db"]
+    V --> W["api-gateway/jwt"]
+    I --> C["Secrets Store CSI"]
+    W --> C
+    C --> P["Pod<br/>/run/secrets/*"]
 ```
 
 이 구조가 가장 깔끔합니다.
@@ -644,14 +645,19 @@ etcd에 Secret 없음
 
 클라우드에서 적절한 Managed Secret Manager를 제공한다면:
 
-```
-Managed Secret Manager
-        ↓
-External Secrets Operator
-        ↓
-Kubernetes Secret
-        ↓
-Pod
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Managed Secret Manager"]
+    N1["External Secrets Operator"]
+    N2["Kubernetes Secret"]
+    N3["Pod"]
+    N0 --> N1 --> N2 --> N3
 ```
 
 입니다.
@@ -684,28 +690,38 @@ Kubernetes Secret이 생성되는 것은 괜찮지만 "Git이나 프로젝트에
 
 특히 "Kubernetes Secret마저 사용하지 않겠다"면:
 
-```
-Vault
- ↓
-Kubernetes ServiceAccount 인증
- ↓
-Secrets Store CSI
- ↓
-Pod ephemeral volume
- ↓
-Spring Boot configtree
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Vault"]
+    N1["Kubernetes ServiceAccount 인증"]
+    N2["Secrets Store CSI"]
+    N3["Pod ephemeral volume"]
+    N4["Spring Boot configtree"]
+    N0 --> N1 --> N2 --> N3 --> N4
 ```
 
 구조를 가장 먼저 검토할 만합니다.
 
 반대로 "Kubernetes Secret 자체는 괜찮고 Git/소스에서만 비밀값을 없애고 싶다"면:
 
-```
-Vault / Cloud Secret Manager
- ↓
-External Secrets Operator
- ↓
-Kubernetes Secret
+```mermaid
+---
+config:
+  theme: dark
+  flowchart:
+    useMaxWidth: false
+---
+flowchart TD
+    N0["Vault / Cloud Secret Manager"]
+    N1["External Secrets Operator"]
+    N2["Kubernetes Secret"]
+    N0 --> N1 --> N2
 ```
 
 이 방식이 GitOps와 운영 편의성 사이의 균형이 좋습니다. (external-secrets.io)
